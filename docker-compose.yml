@@ -1,0 +1,17 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: rfc_management:latest
+        container_name: rfc_management
+        ports:
+            - "8000:8000"
+            - "5173:5173"
+        volumes:
+            - .:/var/www
+        env_file:
+            - .env
+        depends_on: []
+        command: |
+            sh -c "touch /var/www/database/database.sqlite && php artisan migrate && /usr/bin/supervisord -c /etc/supervisord.conf"
