@@ -24,4 +24,14 @@ class Vote extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function scopeUpvotes($query)
+    {
+        return $query->where('type', 'upvote');
+    }
+
+    public function scopeDownvotes($query)
+    {
+        return $query->where('type', 'downvote');
+    }
 }

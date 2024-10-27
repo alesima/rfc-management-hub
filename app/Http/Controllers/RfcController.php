@@ -23,6 +23,8 @@ class RfcController extends Controller
                 'username' => $rfc->user->name,
                 'tags' => $rfc->tags->pluck('name'),
                 'comments' => $rfc->comments->count(),
+                'upvotes' => $rfc->votes()->Upvotes()->count(),
+                'downvotes' => $rfc->votes()->Downvotes()->count(),
                 'created_at' => $rfc->created_at,
                 'updated_at' => $rfc->updated_at,
             ];
@@ -121,6 +123,8 @@ class RfcController extends Controller
                 'username' => $rfc->user->name,
                 'tags' => $rfc->tags->pluck('name'),
                 'comments' => $rfc->comments->count(),
+                'upvotes' => $rfc->votes()->Upvotes()->count(),
+                'downvotes' => $rfc->votes()->Downvotes()->count(),
                 'created_at' => $rfc->created_at,
                 'updated_at' => $rfc->updated_at,
             ];
@@ -143,9 +147,11 @@ class RfcController extends Controller
                     'created_at' => $comment->created_at,
                 ];
             }),
+            'upvotes' => $rfc->votes()->Upvotes()->count(),
+            'downvotes' => $rfc->votes()->Downvotes()->count(),
+            'version' => $rfc->version,
             'created_at' => $rfc->created_at,
             'updated_at' => $rfc->updated_at,
-            'version' => $rfc->version
         ];
 
         return Inertia::render('Rfcs/Index', [
@@ -184,7 +190,7 @@ class RfcController extends Controller
     public function vote(Request $request, Rfc $rfc)
     {
         $user = Auth::user();
-        $type = $request->input('type'); // upvote or downvote
+        $type = $request->input('type'); // 'upvote' or 'downvote'
 
         $existingVote = Vote::where('user_id', $user->id)
             ->where('rfc_id', $rfc->id)
@@ -192,23 +198,26 @@ class RfcController extends Controller
 
         if ($existingVote && $existingVote->type === $type) {
             $existingVote->delete();
-            return response()->json(['message' => 'Vote removed.'], 200);
-        }
-
-        if ($existingVote) {
+            $message = 'Vote removed.';
+        } elseif ($existingVote) {
             $existingVote->update(['type' => $type]);
-            return response()->json(['message' => 'Vote updated.'], 200);
+            $message = 'Vote updated.';
+        } else {
+            Vote::create([
+                'user_id' => $user->id,
+                'rfc_id' => $rfc->id,
+                'type' => $type,
+            ]);
+            $message = 'Vote added.';
         }
-
-        Vote::create([
-            'user_id' => $user->id,
-            'rfc_id' => $rfc->id,
-            'type' => $type,
-        ]);
 
         $upvotes = Vote::where('rfc_id', $rfc->id)->where('type', 'upvote')->count();
         $downvotes = Vote::where('rfc_id', $rfc->id)->where('type', 'downvote')->count();
 
-        return response()->json(['upvotes' => $upvotes, 'downvotes' => $downvotes], 200);
+        return response()->json([
+            'message' => $message,
+            'upvotes' => $upvotes,
+            'downvotes' => $downvotes,
+        ], 200);
     }
 }

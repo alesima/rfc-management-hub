@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { router } from "@inertiajs/react";
+import axios from "axios";
 import VoteButton from "./VoteButton";
 
 const VoteControls = ({
@@ -12,20 +12,16 @@ const VoteControls = ({
   const [downvotes, setDownvotes] = useState(initialDownvotes);
   const [userVote, setUserVote] = useState(initialUserVote);
 
-  const handleVote = (type) => {
-    router.post(
-      route("rfcs.vote", rfcId),
-      {
-        type,
-      },
-      {
-        onSuccess: ({ props }) => {
-          setUpvotes(props.upvotes);
-          setDownvotes(props.downvotes);
-          setUserVote(type === userVote ? null : type);
-        },
-      }
-    );
+  const handleVote = async (type) => {
+    try {
+      const response = await axios.post(route("rfcs.vote", rfcId), { type });
+      const { upvotes, downvotes } = response.data;
+      setUpvotes(upvotes);
+      setDownvotes(downvotes);
+      setUserVote(type === userVote ? null : type);
+    } catch (error) {
+      console.error("Failed to submit vote:", error);
+    }
   };
 
   return (
