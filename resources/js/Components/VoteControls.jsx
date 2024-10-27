@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
 import VoteButton from "./VoteButton";
-import PopupAlert from "./PopupAlert";
 
 const VoteControls = ({
   rfcId,
@@ -13,7 +12,6 @@ const VoteControls = ({
   const [upvotes, setUpvotes] = useState(initialUpvotes);
   const [downvotes, setDownvotes] = useState(initialDownvotes);
   const [userVote, setUserVote] = useState(initialUserVote);
-  const [showAlert, setShowAlert] = useState(false);
 
   const handleVote = async (type) => {
     if (!isAuthenticated) {
@@ -33,25 +31,26 @@ const VoteControls = ({
   };
 
   return (
-    <div className="flex items-center space-x-4 mt-4">
+    <div className="flex items-center space-x-2 mt-4">
       <VoteButton
         type="upvote"
         count={upvotes}
         onVote={() => handleVote("upvote")}
         isSelected={userVote === "upvote"}
+        disabled={!isAuthenticated}
       />
       <VoteButton
         type="downvote"
         count={downvotes}
         onVote={() => handleVote("downvote")}
         isSelected={userVote === "downvote"}
+        disabled={!isAuthenticated}
       />
 
-      {showAlert && (
-        <PopupAlert
-          message={"You must be logged in to vote"}
-          onClose={() => setShowAlert(false)}
-        />
+      {!isAuthenticated && (
+        <p className="text-sm text-gray-600">
+          You must be logged in to vote.
+        </p>
       )}
     </div>
   );

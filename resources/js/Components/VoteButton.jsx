@@ -1,7 +1,7 @@
 // VoteButton.js
 import React from "react";
 
-const VoteButton = ({ type, count, onVote, isSelected }) => {
+const VoteButton = ({ type, count, onVote, isSelected, disabled }) => {
   const isUpvote = type === "upvote";
 
   const icon = (
@@ -37,6 +37,7 @@ const VoteButton = ({ type, count, onVote, isSelected }) => {
     <button
       onClick={onVote}
       className="flex items-center space-x-1 text-gray-700 px-3 py-1 focus:outline-none"
+      disabled={disabled}
     >
       {icon}
       <span>{count}</span>
