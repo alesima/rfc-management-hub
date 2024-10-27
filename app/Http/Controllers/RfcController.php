@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Rfc;
 use App\Models\Tag;
+use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class RfcController extends Controller
@@ -177,5 +179,36 @@ class RfcController extends Controller
     {
         $rfc->delete();
         return redirect(route('rfcs.index'));
+    }
+
+    public function vote(Request $request, Rfc $rfc)
+    {
+        $user = Auth::user();
+        $type = $request->input('type'); // upvote or downvote
+
+        $existingVote = Vote::where('user_id', $user->id)
+            ->where('rfc_id', $rfc->id)
+            ->first();
+
+        if ($existingVote && $existingVote->type === $type) {
+            $existingVote->delete();
+            return response()->json(['message' => 'Vote removed.'], 200);
+        }
+
+        if ($existingVote) {
+            $existingVote->update(['type' => $type]);
+            return response()->json(['message' => 'Vote updated.'], 200);
+        }
+
+        Vote::create([
+            'user_id' => $user->id,
+            'rfc_id' => $rfc->id,
+            'type' => $type,
+        ]);
+
+        $upvotes = Vote::where('rfc_id', $rfc->id)->where('type', 'upvote')->count();
+        $downvotes = Vote::where('rfc_id', $rfc->id)->where('type', 'downvote')->count();
+
+        return response()->json(['upvotes' => $upvotes, 'downvotes' => $downvotes], 200);
     }
 }

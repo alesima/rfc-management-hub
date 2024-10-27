@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/rfcs/{rfc}', [RfcController::class, 'update'])->name('rfcs.update');
     Route::delete('/rfcs/{rfc}', [RfcController::class, 'destroy'])->name('rfcs.destroy');
     Route::post('/rfc/{rfc}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::post('/rfc/{rfc}/vote', [RfcController::class, 'vote'])->name('rfcs.vote');
 });
 
 Route::middleware('auth')->group(function () {

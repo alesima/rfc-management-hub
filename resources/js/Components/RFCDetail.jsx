@@ -1,16 +1,15 @@
 import React, { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import { Mermaid } from "mdx-mermaid/lib/Mermaid";
-import rehypeRaw from "rehype-raw";
 import CommentList from "./CommentList";
 import CommentForm from "./CommentSubmitForm";
 import LoginPrompt from "./LoginPrompt";
 import TagList from "./TagList";
 import RFCSection from "./RFCSection";
+import VoteControls from "./VoteControls";
 
 const RFCDetail = ({ sections, rfc, user }) => {
+  const [comments, setComments] = useState(rfc.comments || []);
+
   const parsedContent = JSON.parse(rfc.content);
-  const [comments, setComments] = useState(rfc.comments);
 
   const handleCommentSubmit = (content) => {
     setComments([
@@ -65,6 +64,13 @@ const RFCDetail = ({ sections, rfc, user }) => {
           ))}
 
         {rfc.tags && rfc.tags.length > 0 && <TagList tags={rfc.tags} />}
+
+        <VoteControls
+          rfcId={rfc.id}
+          initialUpvotes={rfc.upvotes}
+          initialDownvotes={rfc.downvotes}
+          initialUserVote={rfc.user_vote}
+        />
 
         <CommentList comments={comments} />
 

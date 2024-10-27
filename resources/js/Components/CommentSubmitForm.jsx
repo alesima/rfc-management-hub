@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "@inertiajs/react";
 
 const CommentSubmitForm = ({ rfc, onSubmit }) => {
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, reset, processing, errors } = useForm({
     content: "",
   });
 
@@ -12,7 +12,7 @@ const CommentSubmitForm = ({ rfc, onSubmit }) => {
       preserveScroll: true,
       onSuccess: () => {
         onSubmit(data.content);
-        setData("content", "");
+        reset("content");
       },
     });
   };
