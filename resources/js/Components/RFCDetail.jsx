@@ -7,7 +7,7 @@ import RFCSection from "./RFCSection";
 import VoteControls from "./VoteControls";
 
 const RFCDetail = ({ sections, rfc, user }) => {
-  const [comments, setComments] = useState(rfc.comments || []);
+  const [comments, setComments] = useState(rfc.comments);
 
   const parsedContent = JSON.parse(rfc.content);
 
@@ -25,7 +25,7 @@ const RFCDetail = ({ sections, rfc, user }) => {
 
   return (
     <div className="overflow-hidden">
-      <div className="p-6">
+      <div className="md:p-6 p-2">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">{rfc.title}</h1>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -70,6 +70,7 @@ const RFCDetail = ({ sections, rfc, user }) => {
           initialUpvotes={rfc.upvotes}
           initialDownvotes={rfc.downvotes}
           initialUserVote={rfc.user_vote}
+          isAuthenticated={!!user}
         />
 
         <CommentList comments={comments} />

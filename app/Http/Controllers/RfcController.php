@@ -122,7 +122,14 @@ class RfcController extends Controller
                 'content' => $rfc->content,
                 'username' => $rfc->user->name,
                 'tags' => $rfc->tags->pluck('name'),
-                'comments' => $rfc->comments->count(),
+                'comments' => $rfc->comments->map(function ($comment) {
+                    return [
+                        'id' => $comment->id,
+                        'content' => $comment->content,
+                        'username' => $comment->user->name,
+                        'created_at' => $comment->created_at,
+                    ];
+                }),
                 'upvotes' => $rfc->votes()->Upvotes()->count(),
                 'downvotes' => $rfc->votes()->Downvotes()->count(),
                 'created_at' => $rfc->created_at,

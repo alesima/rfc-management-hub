@@ -81,7 +81,7 @@ export default function Index({
           Search
         </button>
       </div>
-      <div className="flex justify-between mb-6">
+      <div className="flex justify-between md:mb-6">
         {["list", "detail", "submit"].map((tab) => (
           <button
             key={tab}

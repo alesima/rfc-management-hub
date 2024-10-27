@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "prismjs/themes/prism-tomorrow.css";
+
 @layer utilities {
   .backdrop-blur-sm {
     -webkit-backdrop-filter: blur(4px);
@@ -27,3 +29,13 @@
 .markdown-preview {
   white-space: pre-wrap;
 }
+
+/* Custom styling for code blocks */
+.prose code {
+  @apply bg-gray-100 text-gray-900 rounded;
+}
+
+.prose pre code {
+  @apply bg-gray-800 text-white p-4 my-4 rounded-md block overflow-x-auto;
+}
+

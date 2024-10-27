@@ -62,7 +62,7 @@ export default function SubmitRFCForm({ tags, sections, onSubmissionSuccess }) {
   };
 
   return (
-    <div className="p-6">
+    <div className="md:p-6 p-2">
       <h1 className="text-3xl font-bold text-indigo-700 mb-4">
         Submit New RFC
       </h1>
