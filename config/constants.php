@@ -72,7 +72,6 @@ return [
         "client-request",
     ],
     'sections' => [
-        ['name' => 'summary', 'label' => 'Summary', 'default' => true],
         ['name' => 'motivation', 'label' => 'Motivation', 'default' => true],
         ['name' => 'proposal', 'label' => 'Proposal', 'default' => true],
         ['name' => 'impactAnalysis', 'label' => 'Impact Analysis', 'default' => true],

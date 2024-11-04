@@ -11,6 +11,8 @@ class Rfc extends Model
 
     protected $fillable = [
         'title',
+        'summary',
+        'slug',
         'content',
         'user_id',
         'version'

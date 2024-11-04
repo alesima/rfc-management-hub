@@ -31,7 +31,7 @@ const VoteControls = ({
   };
 
   return (
-    <div className="flex items-center space-x-2 mt-4">
+    <div className="flex items-center space-x-2 mt-2">
       <VoteButton
         type="upvote"
         count={upvotes}

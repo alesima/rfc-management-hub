@@ -5,20 +5,31 @@ import SectionSelector from "./SectionSelector";
 import TagInput from "./TagInput";
 import MarkdownSectionField from "./MarkdownSectionField";
 
-export default function SubmitRFCForm({ tags, sections, onSubmissionSuccess }) {
+export default function SubmitRFCForm({
+  tags,
+  sections,
+  rfc,
+  onSubmissionSuccess,
+}) {
   const initialFormData = sections.reduce(
     (acc, section) => {
-      acc[section.name] = "";
+      acc[section.name] = rfc?.content?.[section.name] || "";
       return acc;
     },
-    { title: "", tags: [] }
+    {
+      title: rfc?.title || "",
+      tags: rfc?.tags || [],
+      summary: rfc?.summary || "",
+    }
   );
 
   const { data, setData, post, processing, errors } = useForm(initialFormData);
 
   const [preview, setPreview] = useState("");
   const [selectedSections, setSelectedSections] = useState(
-    sections.filter((section) => section.default).map((section) => section.name)
+    sections
+      .filter((section) => section.default || rfc?.content?.[section.name])
+      .map((section) => section.name)
   );
 
   useEffect(() => {
@@ -44,15 +55,12 @@ export default function SubmitRFCForm({ tags, sections, onSubmissionSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const content = JSON.stringify(
-      selectedSections.reduce((obj, section) => {
-        obj[section] = data[section];
-        return obj;
-      }, {})
-    );
-    post(route("rfcs.store"), {
+
+    const routeName = rfc ? "rfcs.update" : "rfcs.store"; // Determine route
+    const method = rfc ? put : post; // Determine HTTP method
+
+    method(route(routeName, { id: rfc?.id }), {
       ...data,
-      content,
       preserveScroll: true,
       onSuccess: () => {
         setData(initialFormData);
@@ -64,7 +72,7 @@ export default function SubmitRFCForm({ tags, sections, onSubmissionSuccess }) {
   return (
     <div className="md:p-6 p-2">
       <h1 className="text-3xl font-bold text-indigo-700 mb-4">
-        Submit New RFC
+        {rfc ? "Edit RFC" : "Submit New RFC"}
       </h1>
 
       <SectionSelector
@@ -102,6 +110,29 @@ export default function SubmitRFCForm({ tags, sections, onSubmissionSuccess }) {
           }
         />
 
+        <div className="mb-4">
+          <label
+            htmlFor="summary"
+            className="block text-gray-700 font-bold mb-2"
+          >
+            Summary
+          </label>
+          <textarea
+            id="summary"
+            value={data.summary}
+            rows="4"
+            maxLength={255}
+            onChange={(e) => setData("summary", e.target.value)}
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          {errors.summary && (
+            <div className="text-red-500 text-sm mt-1">{errors.summary}</div>
+          )}
+          <p className="text-gray-500 text-sm mt-1">
+            {255 - data.summary?.length} characters remaining
+          </p>
+        </div>
+
         {selectedSections.map((section) => (
           <MarkdownSectionField
             key={section}
@@ -127,7 +158,13 @@ export default function SubmitRFCForm({ tags, sections, onSubmissionSuccess }) {
           disabled={processing}
           className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
         >
-          {processing ? "Submitting..." : "Submit RFC"}
+          {processing
+            ? rfc
+              ? "Updating..."
+              : "Submitting..."
+            : rfc
+            ? "Update RFC"
+            : "Submit RFC"}
         </button>
       </form>
     </div>

@@ -6,6 +6,8 @@ import SubmitRFCForm from "@/Components/RFCSubmitForm";
 import LoginPrompt from "@/Components/LoginPrompt";
 import { router } from "@inertiajs/react";
 import DetailPrompt from "@/Components/DetailPrompt";
+import ConfirmationModal from "@/Components/ConfirmationModal";
+import SearchBar from "@/Components/SearchBar";
 
 export default function Index({
   user,
@@ -19,6 +21,10 @@ export default function Index({
     initialSelectedRFC ? "detail" : "list"
   );
   const [selectedRFC, setSelectedRFC] = useState(null);
+  const [editingRFC, setEditingRFC] = useState(null);
+  const [rfcToDelete, setRFCToDelete] = useState(null);
+  const [rfcList, setRfcList] = useState(rfcs);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (initialSelectedRFC) {
@@ -27,12 +33,44 @@ export default function Index({
     }
   }, [initialSelectedRFC]);
 
+  useEffect(() => {
+    const filteredRFCs = rfcs.filter((rfc) =>
+      rfc.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setRfcList(filteredRFCs);
+  }, [searchTerm, rfcs]);
+
   const handleRFCSelect = (rfc) => {
     setSelectedRFC(rfc);
     setActiveTab("detail");
     router.visit(route("rfcs.show", rfc.id), {
       preserveState: true,
       replace: true,
+    });
+  };
+
+  const handleSearchFocus = () => {
+    setActiveTab("list");
+  };
+
+  const handleEdit = (rfc) => {
+    setEditingRFC(rfc);
+    setActiveTab("submit");
+  };
+
+  const openDeleteConfirmationModal = (rfc) => {
+    setRFCToDelete(rfc);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    router.delete(route("rfcs.destroy", rfcToDelete.id), {
+      preserveState: true,
+      onSuccess: () => {
+        setRfcList(rfcList.filter((rfc) => rfc.id !== rfcToDelete.id));
+        setIsModalOpen(false);
+        setActiveTab("list");
+      },
     });
   };
 
@@ -44,9 +82,15 @@ export default function Index({
   };
 
   const tabContent = {
-    list: <RFCList rfcs={rfcs} onRFCSelect={handleRFCSelect} />,
+    list: <RFCList user={user} rfcs={rfcList} onRFCSelect={handleRFCSelect} />,
     detail: selectedRFC ? (
-      <RFCDetail sections={sections} user={user} rfc={selectedRFC} />
+      <RFCDetail
+        sections={sections}
+        user={user}
+        rfc={selectedRFC}
+        onEdit={handleEdit}
+        onDelete={openDeleteConfirmationModal}
+      />
     ) : (
       <DetailPrompt />
     ),
@@ -54,6 +98,7 @@ export default function Index({
       <SubmitRFCForm
         tags={tags}
         sections={sections}
+        rfc={editingRFC}
         onSubmissionSuccess={handleSubmissionSuccess}
       />
     ) : (
@@ -69,18 +114,12 @@ export default function Index({
       title={selectedRFC ? `RFC: ${selectedRFC.title}` : "RFC Management Hub"}
       user={user}
     >
-      <div className="mb-6 flex">
-        <input
-          type="text"
-          placeholder="Search RFCs..."
-          className="flex-grow p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <button className="bg-indigo-500 text-white px-4 py-2 rounded-r-md hover:bg-indigo-600 transition-colors">
-          Search
-        </button>
-      </div>
+      <SearchBar
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onFocus={handleSearchFocus}
+        placeholder="Search RFCs..."
+      />
       <div className="flex justify-between md:mb-6">
         {["list", "detail", "submit"].map((tab) => (
           <button
@@ -108,6 +147,14 @@ export default function Index({
         </>
       )}
       {activeTab !== "list" && tabContent[activeTab]}
+
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete RFC"
+        message="Are you sure you want to delete this RFC? This action cannot be undone."
+      />
     </AppLayout>
   );
 }

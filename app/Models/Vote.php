@@ -25,6 +25,16 @@ class Vote extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function scopeByRfc($query, $rfcId)
+    {
+        return $query->where('rfc_id', $rfcId);
+    }
+
+    public function scopeByUserAndRfc($query, $userId, $rfcId)
+    {
+        return $query->where('user_id', $userId)->where('rfc_id', $rfcId);
+    }
+
     public function scopeUpvotes($query)
     {
         return $query->where('type', 'upvote');

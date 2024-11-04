@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "@inertiajs/react";
 import { handleDaysAgo } from "@/Utils/DateUtils";
+import TagList from "./TagList";
+import VoteControls from "./VoteControls";
 
-export default function RFCList({ rfcs, onRFCSelect }) {
+export default function RFCList({ user,rfcs, onRFCSelect }) {
   return (
     <div className="space-y-4">
       {rfcs.map((rfc) => (
@@ -14,21 +16,21 @@ export default function RFCList({ rfcs, onRFCSelect }) {
           <p className="text-sm text-gray-500 mt-1">
             Submitted by {rfc.username} • {handleDaysAgo(rfc.created_at)}
           </p>
+
+          <p className="text-gray-700 mt-2">{rfc.summary}</p>
+
           {rfc.tags && rfc.tags.length > 0 && (
-            <div className="flex flex-wrap mt-2">
-              {rfc.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            <TagList tags={rfc.tags} noTitle={true} />
           )}
-          <p className="text-gray-700 mt-2">
-            {rfc.content.substring(0, 150)}...
-          </p>
+
+          <VoteControls
+            rfcId={rfc.id}
+            initialUpvotes={rfc.upvotes}
+            initialDownvotes={rfc.downvotes}
+            initialUserVote={rfc.user_vote}
+            isAuthenticated={!!user}
+          />
+
           <Link
             href={route("rfcs.show", rfc.id)}
             onClick={(e) => {

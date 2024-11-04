@@ -29,7 +29,7 @@ export default function TagInput({ tags, allTags, onAddTag, onRemoveTag }) {
         {tags.map((tag) => (
           <span
             key={tag}
-            className="bg-indigo-100 text-indigo-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded"
+            className="bg-indigo-100 text-indigo-800 text-sm font-medium mr-2 mb-2 px-2.5 py-0.5 rounded"
           >
             {tag}
             <button

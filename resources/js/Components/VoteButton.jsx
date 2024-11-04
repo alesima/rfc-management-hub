@@ -36,7 +36,7 @@ const VoteButton = ({ type, count, onVote, isSelected, disabled }) => {
   return (
     <button
       onClick={onVote}
-      className="flex items-center space-x-1 text-gray-700 px-3 py-1 focus:outline-none"
+      className="flex items-center space-x-1 text-gray-700 p-1 focus:outline-none"
       disabled={disabled}
     >
       {icon}

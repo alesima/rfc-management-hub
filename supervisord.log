@@ -28,3 +28,27 @@
 2024-10-26 21:26:34,243 INFO spawned: 'react' with pid 13
 2024-10-26 21:26:35,637 INFO success: laravel entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
 2024-10-26 21:26:35,637 INFO success: react entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-28 18:54:17,616 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-28 18:54:17,618 INFO supervisord started with pid 11
+2024-10-28 18:54:18,621 INFO spawned: 'laravel' with pid 12
+2024-10-28 18:54:18,625 INFO spawned: 'react' with pid 13
+2024-10-28 18:54:19,865 INFO success: laravel entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-28 18:54:19,865 INFO success: react entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-28 21:01:21,021 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-28 21:01:21,027 INFO supervisord started with pid 11
+2024-10-28 21:01:22,029 INFO spawned: 'laravel' with pid 12
+2024-10-28 21:01:22,034 INFO spawned: 'react' with pid 13
+2024-10-28 21:01:23,712 INFO success: laravel entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-28 21:01:23,712 INFO success: react entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-30 18:31:35,431 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-10-30 18:31:35,433 INFO supervisord started with pid 11
+2024-10-30 18:31:36,436 INFO spawned: 'laravel' with pid 12
+2024-10-30 18:31:36,498 INFO spawned: 'react' with pid 13
+2024-10-30 18:31:37,787 INFO success: laravel entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-10-30 18:31:37,787 INFO success: react entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-11-03 16:43:19,101 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2024-11-03 16:43:19,103 INFO supervisord started with pid 11
+2024-11-03 16:43:20,106 INFO spawned: 'laravel' with pid 12
+2024-11-03 16:43:20,112 INFO spawned: 'react' with pid 13
+2024-11-03 16:43:21,317 INFO success: laravel entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2024-11-03 16:43:21,317 INFO success: react entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
