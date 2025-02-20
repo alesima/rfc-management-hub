@@ -8,7 +8,7 @@ const CommentList = ({ comments = [] }) => {
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 print:hidden">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Comments {`(${comments.length})`}</h2>
       {comments.map((comment) => (
         <div key={comment.id} className="mb-4 p-4 border rounded-md bg-gray-50">

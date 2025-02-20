@@ -11,9 +11,19 @@ export default function SubmitRFCForm({
   rfc,
   onSubmissionSuccess,
 }) {
+  const parsedContent = (() => {
+    try {
+      return typeof rfc?.content === "string"
+        ? JSON.parse(rfc.content)
+        : rfc?.content || {};
+    } catch {
+      return {};
+    }
+  })();
+
   const initialFormData = sections.reduce(
     (acc, section) => {
-      acc[section.name] = rfc?.content?.[section.name] || "";
+      acc[section.name] = parsedContent[section.name] || "";
       return acc;
     },
     {
@@ -23,13 +33,15 @@ export default function SubmitRFCForm({
     }
   );
 
-  const { data, setData, post, processing, errors } = useForm(initialFormData);
+  const { data, setData, post, put, processing, errors } = useForm(initialFormData);
 
   const [preview, setPreview] = useState("");
   const [selectedSections, setSelectedSections] = useState(
-    sections
-      .filter((section) => section.default || rfc?.content?.[section.name])
-      .map((section) => section.name)
+    rfc
+      ? Object.keys(parsedContent)
+      : sections
+          .filter((section) => section.default)
+          .map((section) => section.name)
   );
 
   useEffect(() => {

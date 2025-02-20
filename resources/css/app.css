@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "prismjs/themes/prism-tomorrow.css";
-
 @layer utilities {
   .backdrop-blur-sm {
     -webkit-backdrop-filter: blur(4px);
@@ -30,12 +28,52 @@
   white-space: pre-wrap;
 }
 
-/* Custom styling for code blocks */
-.prose code {
-  @apply bg-gray-100 text-gray-900 rounded;
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+  background: transparent !important;
 }
 
-.prose pre code {
-  @apply bg-gray-800 text-white p-4 my-4 rounded-md block overflow-x-auto;
+pre[class*="language-"] {
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
+@media print {
+  .print:hidden {
+    display: none !important;
+  }
+
+  p {
+    margin: 0.5rem 0 !important;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    display: none !important;
+  }
+
+  .md\\:p-6,
+  .p-2 {
+    padding: 0 !important;
+  }
+
+  .mb-4,
+  .mb-6,
+  .space-x-2,
+  .grid-cols-2 {
+    margin: 0 !important;
+  }
+
+  .gap-4 {
+    gap: 0 !important;
+  }
+
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+}

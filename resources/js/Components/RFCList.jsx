@@ -4,7 +4,7 @@ import { handleDaysAgo } from "@/Utils/DateUtils";
 import TagList from "./TagList";
 import VoteControls from "./VoteControls";
 
-export default function RFCList({ user,rfcs, onRFCSelect }) {
+export default function RFCList({ user, rfcs, onRFCSelect }) {
   return (
     <div className="space-y-4">
       {rfcs.map((rfc) => (

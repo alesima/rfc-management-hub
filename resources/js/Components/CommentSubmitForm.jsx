@@ -18,7 +18,7 @@ const CommentSubmitForm = ({ rfc, onSubmit }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6">
+    <form onSubmit={handleSubmit} className="mt-6 print:hidden">
       <h2 className="text-2xl font-semibold text-gray-800 mb-2">
         Leave a Comment
       </h2>

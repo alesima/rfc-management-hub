@@ -16,22 +16,7 @@ class RfcController extends Controller
 {
     public function index()
     {
-        $rfcs = Rfc::with(['user', 'tags'])->latest()->get()->map(function ($rfc) {
-            return [
-                'id' => $rfc->id,
-                'title' => $rfc->title,
-                'summary' => $rfc->summary,
-                'slug' => $rfc->slug,
-                'content' => $rfc->content,
-                'username' => $rfc->user->name,
-                'tags' => $rfc->tags->pluck('name'),
-                'comments' => $rfc->comments->count(),
-                'upvotes' => $rfc->votes()->Upvotes()->count(),
-                'downvotes' => $rfc->votes()->Downvotes()->count(),
-                'created_at' => $rfc->created_at,
-                'updated_at' => $rfc->updated_at,
-            ];
-        });
+        $rfcs = Rfc::withRelations()->latestFirst()->get()->map->transform();
 
         $tags = Config::get('constants.tags');
         $sections = Config::get('constants.sections');
@@ -54,6 +39,7 @@ class RfcController extends Controller
         $validated = $request->validated();
 
         $contentData = collect($validated)->except('title', 'summary', 'tags')->filter()->toArray();
+
         $content = json_encode($contentData);
 
         $rfc = request()->user()->rfcs()->create([
@@ -77,50 +63,12 @@ class RfcController extends Controller
 
     public function show(Rfc $rfc)
     {
-        $rfc->load('user', 'comments.user', 'tags');
-
-        $transformedRfc = [
-            'id' => $rfc->id,
-            'title' => $rfc->title,
-            'summary' => $rfc->summary,
-            'slug' => $rfc->slug,
-            'content' => $rfc->content,
-            'username' => $rfc->user->name,
-            'tags' => $rfc->tags->pluck('name'),
-            'comments' => $rfc->comments->map(function ($comment) {
-                return [
-                    'id' => $comment->id,
-                    'content' => $comment->content,
-                    'username' => $comment->user->name,
-                    'created_at' => $comment->created_at,
-                ];
-            }),
-            'upvotes' => $rfc->votes()->Upvotes()->count(),
-            'downvotes' => $rfc->votes()->Downvotes()->count(),
-            'version' => $rfc->version,
-            'created_at' => $rfc->created_at,
-            'updated_at' => $rfc->updated_at,
-        ];
+        $transformedRfc = $rfc->load(['user', 'comments.user', 'tags'])->transform();
 
         $tags = Config::get('constants.tags');
         $sections = Config::get('constants.sections');
 
-        $rfcs = Rfc::with(['user', 'tags'])->latest()->get()->map(function ($rfc) {
-            return [
-                'id' => $rfc->id,
-                'title' => $rfc->title,
-                'summary' => $rfc->summary,
-                'slug' => $rfc->slug,
-                'content' => $rfc->content,
-                'username' => $rfc->user->name,
-                'tags' => $rfc->tags->pluck('name'),
-                'comments' => $rfc->comments->count(),
-                'upvotes' => $rfc->votes()->Upvotes()->count(),
-                'downvotes' => $rfc->votes()->Downvotes()->count(),
-                'created_at' => $rfc->created_at,
-                'updated_at' => $rfc->updated_at,
-            ];
-        });
+        $rfcs = Rfc::withRelations()->latestFirst()->get()->map->transform();
 
         return Inertia::render('Rfcs/Index', [
             'rfcs' => $rfcs,
@@ -141,6 +89,7 @@ class RfcController extends Controller
         $validated = $request->validated();
 
         $contentData = collect($validated)->except('title', 'summary', 'tags')->filter()->toArray();
+
         $content = json_encode($contentData);
 
         $rfc->update([
@@ -157,7 +106,7 @@ class RfcController extends Controller
                 return Tag::firstOrCreate(['name' => $tagName]);
             });
 
-            $rfc->tags()->attach($tags->pluck('id'));
+            $rfc->tags()->sync($tags->pluck('id'));
         }
 
         return redirect(route('rfcs.show', $rfc));
