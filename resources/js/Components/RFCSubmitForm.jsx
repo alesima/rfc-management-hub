@@ -9,6 +9,7 @@ export default function SubmitRFCForm({
   tags,
   sections,
   rfc,
+  onNewRFC,
   onSubmissionSuccess,
 }) {
   const parsedContent = (() => {
@@ -21,19 +22,29 @@ export default function SubmitRFCForm({
     }
   })();
 
-  const initialFormData = sections.reduce(
-    (acc, section) => {
-      acc[section.name] = parsedContent[section.name] || "";
-      return acc;
-    },
-    {
-      title: rfc?.title || "",
-      tags: rfc?.tags || [],
-      summary: rfc?.summary || "",
-    }
-  );
+  const getPristineInitialData = () =>
+    sections.reduce(
+      (acc, section) => {
+        acc[section.name] = "";
+        return acc;
+      },
+      { title: "", tags: [], summary: "" }
+    );
 
-  const { data, setData, post, put, processing, errors } = useForm(initialFormData);
+  const initialFormData = rfc
+    ? {
+        title: rfc.title || "",
+        tags: rfc.tags || [],
+        summary: rfc.summary || "",
+        ...Object.keys(parsedContent).reduce((acc, key) => {
+          acc[key] = parsedContent[key] || "";
+          return acc;
+        }, {}),
+      }
+    : getPristineInitialData();
+
+  const { data, setData, post, put, processing, errors } =
+    useForm(initialFormData);
 
   const [preview, setPreview] = useState("");
   const [selectedSections, setSelectedSections] = useState(
@@ -75,17 +86,37 @@ export default function SubmitRFCForm({
       ...data,
       preserveScroll: true,
       onSuccess: () => {
-        setData(initialFormData);
+        setData(getPristineInitialData());
         onSubmissionSuccess();
       },
     });
   };
 
+  const newRFC = () => {
+    setData(getPristineInitialData());
+    setSelectedSections(
+      sections
+        .filter((section) => section.default)
+        .map((section) => section.name)
+    );
+    onNewRFC();
+  };
+
   return (
     <div className="md:p-6 p-2">
-      <h1 className="text-3xl font-bold text-indigo-700 mb-4">
-        {rfc ? "Edit RFC" : "Submit New RFC"}
-      </h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold text-indigo-700">
+          {rfc ? "Edit RFC" : "Submit New RFC"}
+        </h1>
+        {rfc && (
+          <button
+            className="px-4 py-1 border border-indigo-500 text-indigo-500 rounded-md hover:bg-indigo-500 hover:text-white transition-colors duration-150"
+            onClick={() => newRFC()}
+          >
+            Submit New RFC
+          </button>
+        )}
+      </div>
 
       <SectionSelector
         sections={sections}

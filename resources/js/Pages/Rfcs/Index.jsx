@@ -59,6 +59,11 @@ export default function Index({
     setActiveTab("edit");
   };
 
+  const handleNewSubmission = () => {
+    setEditingRFC(null);
+    setActiveTab("submit");
+  };
+
   const openDeleteConfirmationModal = (rfc) => {
     setRFCToDelete(rfc);
     setIsModalOpen(true);
@@ -109,6 +114,7 @@ export default function Index({
         tags={tags}
         sections={sections}
         rfc={editingRFC}
+        onNewRFC={handleNewSubmission}
         onSubmissionSuccess={handleSubmissionSuccess}
       />
     ) : (
