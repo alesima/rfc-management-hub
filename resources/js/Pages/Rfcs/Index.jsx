@@ -8,6 +8,7 @@ import { router } from "@inertiajs/react";
 import DetailPrompt from "@/Components/DetailPrompt";
 import ConfirmationModal from "@/Components/ConfirmationModal";
 import SearchBar from "@/Components/SearchBar";
+import TabBar from "@/Components/TabBar";
 
 export default function Index({
   user,
@@ -55,7 +56,7 @@ export default function Index({
 
   const handleEdit = (rfc) => {
     setEditingRFC(rfc);
-    setActiveTab("submit");
+    setActiveTab("edit");
   };
 
   const openDeleteConfirmationModal = (rfc) => {
@@ -81,6 +82,15 @@ export default function Index({
     });
   };
 
+  const tabs = [
+    { key: "list", icon: "📄 ", label: "List RFC" },
+    { key: "detail", icon: "🔍 ", label: "View RFC" },
+    { key: "edit", icon: "✏️ ", label: "Edit RFC" },
+    { key: "submit", icon: "➕ ", label: "Submit RFC" },
+  ].filter((tab) =>
+    editingRFC && user ? tab.key !== "submit" : tab.key !== "edit"
+  );
+
   const tabContent = {
     list: <RFCList user={user} rfcs={rfcList} onRFCSelect={handleRFCSelect} />,
     detail: selectedRFC ? (
@@ -94,7 +104,7 @@ export default function Index({
     ) : (
       <DetailPrompt />
     ),
-    submit: user ? (
+    [editingRFC && user ? "edit" : "submit"]: user ? (
       <SubmitRFCForm
         tags={tags}
         sections={sections}
@@ -103,8 +113,10 @@ export default function Index({
       />
     ) : (
       <LoginPrompt
-        title={"Submit an RFC"}
-        message={"You must be logged in to submit an RFC."}
+        title={`${editingRFC && user ? "Edit" : "Submit"} an RFC`}
+        message={`You must be logged in to ${
+          editingRFC && user ? "edit" : "submit"
+        } an RFC.`}
       />
     ),
   };
@@ -120,24 +132,7 @@ export default function Index({
         onFocus={handleSearchFocus}
         placeholder="Search RFCs..."
       />
-      <div className="flex justify-between md:mb-6">
-        {["list", "detail", "submit"].map((tab) => (
-          <button
-            key={tab}
-            className={`flex-1 mx-1 py-2 px-4 rounded-md border ${
-              activeTab === tab
-                ? "bg-indigo-100 border-indigo-300 text-indigo-700"
-                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-            }`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === "list" && "📄 "}
-            {tab === "detail" && "🔍 "}
-            {tab === "submit" && "➕ "}
-            {tab.charAt(0).toUpperCase() + tab.slice(1)} RFC
-          </button>
-        ))}
-      </div>
+      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === "list" && (
         <>
           <h2 className="text-2xl font-semibold text-indigo-700 mb-4">
