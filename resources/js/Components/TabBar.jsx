@@ -2,21 +2,21 @@ import React from "react";
 
 const TabBar = ({ tabs, activeTab, onTabChange }) => {
   const getButtonClass = (isActive) =>
-    `flex-1 mx-1 py-2 px-4 rounded-md border ${
+    `px-4 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
       isActive
-        ? "bg-indigo-100 border-indigo-300 text-indigo-700"
-        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+        ? "bg-white shadow text-indigo-700"
+        : "text-gray-500 hover:text-gray-800"
     }`;
 
   return (
-    <div className="flex justify-between md:mb-6">
+    <div className="inline-flex rounded-full bg-gray-200/70 p-1 gap-1 print:hidden">
       {tabs.map((tab) => (
         <button
           key={tab.key}
           className={getButtonClass(activeTab === tab.key)}
           onClick={() => onTabChange(tab.key)}
         >
-          {tab.icon} {tab.label}
+          {tab.label}
         </button>
       ))}
     </div>

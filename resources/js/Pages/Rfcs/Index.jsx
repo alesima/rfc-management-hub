@@ -108,19 +108,24 @@ export default function Index({
     teams.find((t) => t.id === selectedRFC?.team_id) ?? teams[0] ?? null;
 
   const tabs = [
-    { key: "list", icon: "📄 ", label: "List RFC" },
-    { key: "detail", icon: "🔍 ", label: "View RFC" },
-    { key: "edit", icon: "✏️ ", label: "Edit RFC" },
-    { key: "submit", icon: "➕ ", label: "Submit RFC" },
-    ...(user && teams.length > 0
-      ? [{ key: "team", icon: "👥 ", label: "Team" }]
-      : []),
+    { key: "list", label: "RFCs" },
+    { key: "detail", label: "View" },
+    { key: "edit", label: "Edit" },
+    { key: "submit", label: "New RFC" },
+    ...(user && teams.length > 0 ? [{ key: "team", label: "Team" }] : []),
   ].filter((tab) =>
     editingRFC && user ? tab.key !== "submit" : tab.key !== "edit"
   );
 
   const tabContent = {
-    list: <RFCList user={user} rfcs={rfcList} onRFCSelect={handleRFCSelect} />,
+    list: (
+      <RFCList
+        user={user}
+        rfcs={rfcList}
+        onRFCSelect={handleRFCSelect}
+        onNew={handleNewSubmission}
+      />
+    ),
     detail: selectedRFC ? (
       <RFCDetail
         sections={sections}
@@ -157,47 +162,62 @@ export default function Index({
       user={user}
       teamName={teamName}
     >
-      <div className="flex gap-2">
-        <div className="flex-grow">
-          <SearchBar
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={handleSearchFocus}
-            placeholder="Search RFCs..."
-          />
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-3 mb-4 print:hidden">
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex-grow min-w-[200px]">
+            <SearchBar
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={handleSearchFocus}
+              placeholder="Search title or summary..."
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+            title="Filter by status"
+          >
+            <option value="all">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="review">In review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="archived">Archived</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => setStaleOnly(!staleOnly)}
+            title="Reviews open for more than 14 days"
+            className={`px-3 py-2 text-sm font-medium rounded-full border transition-colors ${
+              staleOnly
+                ? "bg-orange-100 border-orange-300 text-orange-800"
+                : "bg-gray-100 border-gray-200 text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Stale
+          </button>
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-          title="Filter by status"
-        >
-          <option value="all">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="review">In review</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="archived">Archived</option>
-        </select>
-        <label
-          className="flex items-center gap-1 px-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer"
-          title="Reviews open for more than 14 days"
-        >
-          <input
-            type="checkbox"
-            checked={staleOnly}
-            onChange={(e) => setStaleOnly(e.target.checked)}
-            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          />
-          Stale
-        </label>
       </div>
-      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <div className="flex items-center justify-between mb-4 print:hidden">
+        <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <button
+          onClick={handleNewSubmission}
+          className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+        >
+          + New RFC
+        </button>
+      </div>
       {activeTab === "list" && (
         <>
-          <h2 className="text-2xl font-semibold text-indigo-700 mb-4">
-            Recent RFCs
-          </h2>
+          <p className="text-sm text-gray-500 mb-3">
+            {rfcList.length} RFC{rfcList.length === 1 ? "" : "s"}
+            {searchTerm && (
+              <>
+                {" "}matching “<span className="font-medium text-gray-700">{searchTerm}</span>”
+              </>
+            )}
+          </p>
           {tabContent[activeTab]}
         </>
       )}

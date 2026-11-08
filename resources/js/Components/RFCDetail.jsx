@@ -35,19 +35,45 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
 
   return (
     <div className="overflow-hidden">
-      <div className="md:p-6 p-2">
-        <div className="flex flex-col md:flex-row justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{rfc.title}</h1>
-            <div className="mt-2">
+      <button
+        onClick={() => window.history.back()}
+        className="mb-3 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors print:hidden"
+      >
+        ← Back to list
+      </button>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm md:p-6 p-4 mb-4">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <StatusBadge status={rfc.status} />
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                v{rfc.version}
+              </span>
+              {rfc.is_stale && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                  stale
+                </span>
+              )}
             </div>
+            <h1 className="mt-2 text-3xl font-bold text-gray-900 leading-tight">
+              {rfc.title}
+            </h1>
+            {rfc.summary && (
+              <p className="mt-2 text-gray-600 leading-relaxed">{rfc.summary}</p>
+            )}
+            <p className="mt-3 text-sm text-gray-500">
+              by <span className="font-medium text-gray-700">{rfc.username}</span>
+              {" · "}
+              {new Date(rfc.created_at).toLocaleDateString()}
+              {" · updated "}
+              {new Date(rfc.updated_at).toLocaleDateString()}
+            </p>
             <StatusTransitions rfc={rfc} />
           </div>
-          <div className="flex space-x-2">
+          <div className="flex md:flex-col gap-2 shrink-0">
             <button
               onClick={handlePrint}
-              className="flex items-center justify-center bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600 transition-colors"
+              className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
               title="Print"
             >
               <svg
@@ -72,7 +98,7 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
                 {canUpdate && (
                 <button
                   onClick={() => onEdit(rfc)}
-                  className="flex items-center justify-center bg-indigo-500 text-white p-2 rounded-md hover:bg-indigo-600 transition-colors print:hidden"
+                  className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-xl hover:bg-indigo-700 transition-colors text-sm font-medium print:hidden"
                   title="Edit RFC"
                 >
                   <svg
@@ -90,7 +116,7 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
                 {canDelete && (
                 <button
                   onClick={() => onDelete(rfc)}
-                  className="flex items-center justify-center bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors print:hidden"
+                  className="flex items-center justify-center gap-2 bg-white border border-red-200 text-red-600 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors text-sm font-medium print:hidden"
                   title="Delete RFC"
                 >
                   <svg
@@ -112,32 +138,9 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
             )}
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-700">Version</h2>
-            <p className="text-gray-600">{rfc.version}</p>
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-700">Author</h2>
-            <p className="text-gray-600">{rfc.username}</p>
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-700">Created</h2>
-            <p className="text-gray-600">
-              {new Date(rfc.created_at).toLocaleTimeString()}
-            </p>
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-700">
-              Last Updated
-            </h2>
-            <p className="text-gray-600">
-              {new Date(rfc.updated_at).toLocaleTimeString()}
-            </p>
-          </div>
-        </div>
-
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm md:p-6 p-4">
         {rfc.decision && (
           <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4">
             <div className="flex items-center justify-between">

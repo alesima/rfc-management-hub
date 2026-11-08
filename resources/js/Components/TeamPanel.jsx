@@ -45,7 +45,7 @@ export default function TeamPanel({ team, user }) {
   };
 
   return (
-    <div>
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold text-indigo-700">{team.name}</h2>
         <span className="text-sm text-gray-500">
