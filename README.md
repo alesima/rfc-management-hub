@@ -1,66 +1,48 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# RFC Management Hub
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Propostas de design (RFCs) com discussão, votação e workflow de aprovação por time. Laravel 11 + Inertia + React 18, SQLite por padrão.
 
-## About Laravel
+## O que faz
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- CRUD de RFCs com seções estruturadas (motivação, proposta, impacto, plano de implementação...)
+- Comentários, up/down votes, tags
+- Workflow por time: `draft → review → approved/rejected → archived`, com trilha auditável (`rfc_transitions`)
+- Multi-team: `teams`, `memberships` (owner/admin/member), `RfcPolicy` (autor ou admin edita; admin aprova)
+- Frontend sinaliza permissões via `rfc.can.{update,delete,change_status}`
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Rodar
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+make up        # docker: backend :8000, vite :5173
+make migrate   # php artisan migrate
+make test      # php artisan test
+```
 
-## Learning Laravel
+Local sem docker: `composer install && npm install && php artisan migrate && composer run dev`
+(precisa de PHP 8.2+ — o repo pinna 8.3.11 no `.tool-versions`; se o shim do mise tentar compilar, use um PHP já instalado no `PATH`).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Rotas principais
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+| Método | URI | Nome |
+|---|---|---|
+| GET | `/rfcs` | `rfcs.index` |
+| GET | `/rfcs/create` | `rfcs.create` |
+| POST | `/rfcs` | `rfcs.store` |
+| GET | `/rfcs/{rfc}` | `rfcs.show` |
+| PUT/DELETE | `/rfcs/{rfc}` | `rfcs.update/destroy` |
+| PATCH | `/rfcs/{rfc}/status` | `rfcs.status.update` |
+| POST | `/rfcs/{rfc}/comments` | `comments.store` |
+| POST | `/rfcs/{rfc}/vote` | `rfcs.vote` |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Detalhe: `/rfcs/create` é declarado **antes** de `/rfcs/{rfc}` — inverter quebra o create (vira `show` com id "create").
 
-## Laravel Sponsors
+## Modelo
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+`User 1—N Membership N—1 Team`, `Team 1—N Rfc`, `Rfc N—N Tag`, `Rfc 1—N Comment/Vote/RfcTransition`.
+RFC carrega contadores via `withVoteCounts()` (evita N+1 do `transform()` antigo).
 
-### Premium Partners
+## Próximos passos
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Team switcher + badges de status no React (passo 4)
+- Limite de seats por plano + convite por email (passo 5)
+- Leitura ainda é pública; pra fechar por time, endurecer `RfcPolicy::view()`

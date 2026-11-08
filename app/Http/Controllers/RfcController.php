@@ -16,7 +16,16 @@ class RfcController extends Controller
 {
     public function index()
     {
-        $rfcs = Rfc::withRelations()->latestFirst()->get()->map->transform();
+        $query = Rfc::withRelations()->withVoteCounts()->latestFirst();
+
+        if (Auth::check()) {
+            $teamIds = Auth::user()->memberships()->pluck('team_id')->all();
+            if ($teamIds !== []) {
+                $query->forTeams($teamIds);
+            }
+        }
+
+        $rfcs = $this->withPermissions($query->get()->map->transform());
 
         $tags = Config::get('constants.tags');
         $sections = Config::get('constants.sections');
@@ -27,6 +36,26 @@ class RfcController extends Controller
             'tags' => $tags,
             'sections' => $sections
         ]);
+    }
+
+    private function withPermissions($rfcs)
+    {
+        $user = Auth::user();
+        $roles = $user ? $user->memberships()->pluck('role', 'team_id')->all() : [];
+
+        return $rfcs->map(function ($rfc) use ($user, $roles) {
+            $role = $roles[$rfc['team_id']] ?? null;
+            $isAdmin = in_array($role, ['owner', 'admin'], true);
+            $isAuthor = $user && $rfc['user_id'] === $user->id;
+
+            $rfc['can'] = [
+                'update' => (bool) ($isAuthor || $isAdmin),
+                'delete' => (bool) ($isAuthor || $isAdmin),
+                'change_status' => (bool) ($isAdmin || ($isAuthor && in_array($rfc['status'], ['draft', 'review'], true))),
+            ];
+
+            return $rfc;
+        });
     }
 
     public function create()
@@ -45,9 +74,10 @@ class RfcController extends Controller
         $rfc = request()->user()->rfcs()->create([
             'title' => $validated['title'],
             'summary' => $validated['summary'],
-            'slug' => Str::slug($validated['title']),
+            'slug' => $this->uniqueSlug($validated['title']),
             'content' => $content,
-            'user_id' => Auth::id(),
+            'team_id' => $this->resolveTeamFor(request()->user())->id,
+            'status' => Rfc::STATUS_DRAFT,
         ]);
 
         if (isset($validated['tags'])) {
@@ -63,12 +93,22 @@ class RfcController extends Controller
 
     public function show(Rfc $rfc)
     {
-        $transformedRfc = $rfc->load(['user', 'comments.user', 'tags'])->transform();
+        $transformedRfc = $rfc->load(['user', 'comments.user', 'tags'])->loadVoteCounts()->transform();
 
         $tags = Config::get('constants.tags');
         $sections = Config::get('constants.sections');
 
-        $rfcs = Rfc::withRelations()->latestFirst()->get()->map->transform();
+        $listQuery = Rfc::withRelations()->withVoteCounts()->latestFirst();
+
+        if (Auth::check()) {
+            $teamIds = Auth::user()->memberships()->pluck('team_id')->all();
+            if ($teamIds !== []) {
+                $listQuery->forTeams($teamIds);
+            }
+        }
+
+        $rfcs = $this->withPermissions($listQuery->get()->map->transform());
+        $transformedRfc = $this->withPermissions(collect([$transformedRfc]))->first();
 
         return Inertia::render('Rfcs/Index', [
             'rfcs' => $rfcs,
@@ -81,23 +121,40 @@ class RfcController extends Controller
 
     public function edit(Rfc $rfc)
     {
+        $this->authorize('update', $rfc);
+
         return Inertia::render('Rfcs/Edit', ['rfc' => $rfc]);
     }
 
     public function update(RfcRequest $request, Rfc $rfc)
     {
+        $this->authorize('update', $rfc);
         $validated = $request->validated();
 
         $contentData = collect($validated)->except('title', 'summary', 'tags')->filter()->toArray();
 
         $content = json_encode($contentData);
 
+        $previousStatus = $rfc->status;
+
         $rfc->update([
             'title' => $validated['title'],
             'summary' => $validated['summary'],
             'content' => $content,
-            'slug' => Str::slug($validated['title']),
+            'slug' => $this->uniqueSlug($validated['title'], $rfc->id),
         ]);
+
+        if ($previousStatus !== Rfc::STATUS_DRAFT) {
+            $rfc->update(['status' => Rfc::STATUS_DRAFT, 'decided_by' => null, 'decided_at' => null]);
+
+            \App\Models\RfcTransition::create([
+                'rfc_id' => $rfc->id,
+                'from_status' => $previousStatus,
+                'to_status' => Rfc::STATUS_DRAFT,
+                'actor_id' => $request->user()->id,
+                'comment' => 'Content edited, sent back for review.',
+            ]);
+        }
 
         $rfc->increment('version');
 
@@ -114,24 +171,63 @@ class RfcController extends Controller
 
     public function destroy(Rfc $rfc)
     {
+        $this->authorize('delete', $rfc);
         $rfc->delete();
         return redirect(route('rfcs.index'));
     }
 
+    private function resolveTeamFor(\App\Models\User $user): \App\Models\Team
+    {
+        $teamId = $user->memberships()->orderBy('id')->value('team_id');
+
+        if ($teamId) {
+            return \App\Models\Team::findOrFail($teamId);
+        }
+
+        $team = \App\Models\Team::create([
+            'name' => $user->name."'s team",
+            'slug' => \Illuminate\Support\Str::slug($user->name).'-'.$user->id,
+            'owner_id' => $user->id,
+        ]);
+        $team->memberships()->create(['user_id' => $user->id, 'role' => \App\Models\Membership::ROLE_OWNER]);
+
+        return $team;
+    }
+
+    private function uniqueSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title);
+        if ($base === '') {
+            $base = 'rfc';
+        }
+
+        $slug = $base;
+        $i = 2;
+        while (Rfc::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+            $slug = "{$base}-{$i}";
+            $i++;
+        }
+
+        return $slug;
+    }
+
     public function vote(Request $request, Rfc $rfc)
     {
+        $validated = $request->validate([
+            'type' => 'required|in:upvote,downvote',
+        ]);
+        $type = $validated['type'];
         $userId = Auth::id();
-        $type = $request->input('type'); // 'upvote' or 'downvote'
 
         $existingVote = Vote::byUserAndRfc($userId, $rfc->id)->first();
 
         if ($existingVote && $existingVote->type === $type) {
             $existingVote->delete();
-            return [
+            return response()->json([
                 'message' => 'Vote removed.',
                 'upvotes' => Vote::byRfc($rfc->id)->Upvotes()->count(),
                 'downvotes' => Vote::byRfc($rfc->id)->Downvotes()->count(),
-            ];
+            ]);
         }
 
         Vote::updateOrCreate(

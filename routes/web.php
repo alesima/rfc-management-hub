@@ -4,11 +4,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RfcController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\RfcStatusController;
 
 Route::get('/', [RfcController::class, 'index'])->name('home');
 
 Route::get('/rfcs', [RfcController::class, 'index'])->name('rfcs.index');
-Route::get('/rfcs/{rfc}', [RfcController::class, 'show'])->name('rfcs.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/rfcs/create', [RfcController::class, 'create'])->name('rfcs.create');
@@ -16,9 +16,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/rfcs/{rfc}/edit', [RfcController::class, 'edit'])->name('rfcs.edit');
     Route::put('/rfcs/{rfc}', [RfcController::class, 'update'])->name('rfcs.update');
     Route::delete('/rfcs/{rfc}', [RfcController::class, 'destroy'])->name('rfcs.destroy');
-    Route::post('/rfc/{rfc}/comments', [CommentController::class, 'store'])->name('comments.store');
-    Route::post('/rfc/{rfc}/vote', [RfcController::class, 'vote'])->name('rfcs.vote');
+    Route::post('/rfcs/{rfc}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::post('/rfcs/{rfc}/vote', [RfcController::class, 'vote'])->name('rfcs.vote');
+    Route::patch('/rfcs/{rfc}/status', [RfcStatusController::class, 'update'])->name('rfcs.status.update');
 });
+
+Route::get('/rfcs/{rfc}', [RfcController::class, 'show'])->name('rfcs.show');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
