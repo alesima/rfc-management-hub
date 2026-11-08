@@ -28,7 +28,7 @@ export default function SubmitRFCForm({
         acc[section.name] = "";
         return acc;
       },
-      { title: "", tags: [], summary: "" }
+      { title: "", tags: [], summary: "", review_due_at: "" }
     );
 
   const initialFormData = rfc
@@ -36,6 +36,7 @@ export default function SubmitRFCForm({
         title: rfc.title || "",
         tags: rfc.tags || [],
         summary: rfc.summary || "",
+        review_due_at: rfc.review_due_at || "",
         ...Object.keys(parsedContent).reduce((acc, key) => {
           acc[key] = parsedContent[key] || "";
           return acc;
@@ -174,6 +175,25 @@ export default function SubmitRFCForm({
           <p className="text-gray-500 text-sm mt-1">
             {255 - data.summary?.length} characters remaining
           </p>
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="review_due_at"
+            className="block text-gray-700 font-bold mb-2"
+          >
+            Review due date <span className="font-normal text-gray-500">(optional)</span>
+          </label>
+          <input
+            type="date"
+            id="review_due_at"
+            value={data.review_due_at || ""}
+            onChange={(e) => setData("review_due_at", e.target.value)}
+            className="px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          {errors.review_due_at && (
+            <div className="text-red-500 text-sm mt-1">{errors.review_due_at}</div>
+          )}
         </div>
 
         {selectedSections.map((section) => (

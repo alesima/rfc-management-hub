@@ -54,6 +54,19 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
                   stale
                 </span>
               )}
+              {rfc.review_due_at && (
+                <span
+                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                    rfc.is_overdue
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                  title="Review due date"
+                >
+                  {rfc.is_overdue ? "overdue " : "due "}
+                  {new Date(rfc.review_due_at).toLocaleDateString()}
+                </span>
+              )}
             </div>
             <h1 className="mt-2 text-3xl font-bold text-gray-900 leading-tight">
               {rfc.title}

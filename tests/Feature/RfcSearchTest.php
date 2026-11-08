@@ -78,4 +78,28 @@ class RfcSearchTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->has('rfcs', 1));
     }
+
+    public function test_search_matches_body_content(): void
+    {
+        $this->makeRfc('Unrelated title', Rfc::STATUS_DRAFT, [
+            'summary' => 'Generic words here',
+            'content' => json_encode(['motivation' => 'We need zebracorns for scale']),
+        ]);
+        $this->makeRfc('Other doc');
+
+        $this->get('/rfcs?q=zebracorns')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->has('rfcs', 1));
+    }
+
+    public function test_search_with_special_chars_does_not_crash(): void
+    {
+        $this->makeRfc('Plain doc');
+
+        $this->get('/rfcs?q=" OR 1=1 --')
+            ->assertOk();
+
+        $this->get('/rfcs?q=***(((')
+            ->assertOk();
+    }
 }

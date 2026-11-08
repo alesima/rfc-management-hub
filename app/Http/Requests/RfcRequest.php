@@ -18,11 +18,13 @@ class RfcRequest extends FormRequest
 
         return array_reduce($sections, function ($rules, $section) {
             $rules[$section['name']] = 'nullable';
+
             return $rules;
         }, [
-            'title'   => 'required|max:255',
+            'title' => 'required|max:255',
             'summary' => 'required|max:255',
-            'tags'    => 'array'
+            'tags' => 'array',
+            'review_due_at' => 'nullable|date',
         ]);
     }
 }

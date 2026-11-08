@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class Rfc extends Model
 {
@@ -19,8 +21,20 @@ class Rfc extends Model
         'status',
         'decided_by',
         'decided_at',
+        'review_due_at',
         'version',
     ];
+
+    protected function casts(): array
+    {
+        return ['review_due_at' => 'date'];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn (Rfc $rfc) => $rfc->syncSearchIndex());
+        static::deleted(fn (Rfc $rfc) => $rfc->removeFromSearchIndex());
+    }
 
     public const STATUS_DRAFT = 'draft';
 
@@ -83,6 +97,92 @@ class Rfc extends Model
             'required' => $required,
             'blocking' => $requested > 0 && ($changes > 0 || $approvals < $required),
         ];
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->status === self::STATUS_REVIEW
+            && $this->review_due_at !== null
+            && $this->review_due_at->isPast();
+    }
+
+    public function extractSearchText(): array
+    {
+        $sections = json_decode($this->content ?? '', true);
+        $body = is_array($sections)
+            ? implode("\n", array_filter(array_map('strval', array_values($sections))))
+            : (string) $this->content;
+
+        $decisions = $this->relationLoaded('decisionRecords')
+            ? $this->decisionRecords->pluck('title')->all()
+            : $this->decisionRecords()->pluck('title')->all();
+
+        return [
+            'title' => (string) $this->title,
+            'summary' => (string) $this->summary,
+            'body' => trim($body."\n".implode("\n", $decisions)),
+        ];
+    }
+
+    public function syncSearchIndex(): void
+    {
+        if (! Schema::hasTable('rfc_search')) {
+            return;
+        }
+
+        $text = $this->extractSearchText();
+
+        DB::table('rfc_search')->updateOrInsert(
+            ['rfc_id' => $this->id],
+            ['title' => $text['title'], 'summary' => $text['summary'], 'body' => $text['body']]
+        );
+    }
+
+    public function removeFromSearchIndex(): void
+    {
+        if (! Schema::hasTable('rfc_search')) {
+            return;
+        }
+
+        DB::table('rfc_search')->where('rfc_id', $this->id)->delete();
+    }
+
+    public function scopeSearch($query, string $term)
+    {
+        $fts = self::buildFtsQuery($term);
+
+        if ($fts === null) {
+            return $query->where(function ($q) use ($term) {
+                $q->where('title', 'like', '%'.$term.'%')
+                    ->orWhere('summary', 'like', '%'.$term.'%');
+            });
+        }
+
+        try {
+            return $query
+                ->join('rfc_search', 'rfcs.id', '=', 'rfc_search.rfc_id')
+                ->whereRaw('rfc_search MATCH ?', [$fts])
+                ->orderByRaw('bm25(rfc_search)')
+                ->select('rfcs.*');
+        } catch (\Exception $e) {
+            return $query->where(function ($q) use ($term) {
+                $q->where('title', 'like', '%'.$term.'%')
+                    ->orWhere('summary', 'like', '%'.$term.'%');
+            });
+        }
+    }
+
+    public static function buildFtsQuery(string $term): ?string
+    {
+        $tokens = preg_split('/\s+/', mb_strtolower($term));
+        $tokens = array_filter(array_map(function ($t) {
+            $t = trim($t, "\"'*.:()^\"");
+            $t = preg_replace('/[^a-z0-9@._-]/u', '', $t);
+
+            return $t !== '' ? '"'.$t.'"*' : null;
+        }, $tokens ?: []));
+
+        return $tokens === [] ? null : implode(' ', $tokens);
     }
 
     public function user()
@@ -182,6 +282,8 @@ class Rfc extends Model
             }),
             'upvotes' => $this->upvotes ?? $this->votes()->Upvotes()->count(),
             'downvotes' => $this->downvotes ?? $this->votes()->Downvotes()->count(),
+            'review_due_at' => $this->review_due_at?->toDateString(),
+            'is_overdue' => $this->isOverdue(),
             'is_stale' => $this->status === self::STATUS_REVIEW
                 && $this->updated_at !== null
                 && $this->updated_at->lt(now()->subDays(self::STALE_AFTER_DAYS)),

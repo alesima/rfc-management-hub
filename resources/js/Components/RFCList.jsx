@@ -61,6 +61,11 @@ export default function RFCList({ user, rfcs, onRFCSelect, onNew }) {
                 stale
               </span>
             )}
+            {rfc.is_overdue && (
+              <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                overdue
+              </span>
+            )}
             {rfc.decision && (
               <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">
                 decided · {rfc.decision.status}

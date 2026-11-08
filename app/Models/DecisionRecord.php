@@ -25,6 +25,11 @@ class DecisionRecord extends Model
         return ['decided_at' => 'datetime'];
     }
 
+    protected static function booted(): void
+    {
+        static::created(fn (DecisionRecord $record) => $record->rfc?->syncSearchIndex());
+    }
+
     public function rfc()
     {
         return $this->belongsTo(Rfc::class);
