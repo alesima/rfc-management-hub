@@ -32,6 +32,8 @@ class Rfc extends Model
 
     public const STATUS_ARCHIVED = 'archived';
 
+    public const STALE_AFTER_DAYS = 14;
+
     public const STATUSES = [
         self::STATUS_DRAFT,
         self::STATUS_REVIEW,
@@ -57,6 +59,32 @@ class Rfc extends Model
         return $this->hasMany(RfcTransition::class)->latest();
     }
 
+    public function decisionRecords()
+    {
+        return $this->hasMany(DecisionRecord::class)->orderByDesc('decided_at')->orderByDesc('id');
+    }
+
+    public function reviewRequests()
+    {
+        return $this->hasMany(ReviewRequest::class);
+    }
+
+    public function quorumProgress(): array
+    {
+        $requested = $this->reviewRequests->count();
+        $approvals = $this->reviewRequests->where('status', ReviewRequest::STATUS_APPROVED)->count();
+        $changes = $this->reviewRequests->where('status', ReviewRequest::STATUS_CHANGES_REQUESTED)->count();
+        $required = $requested > 0 ? min($this->team?->approval_quorum ?? 1, $requested) : 0;
+
+        return [
+            'requested' => $requested,
+            'approvals' => $approvals,
+            'changes_requested' => $changes,
+            'required' => $required,
+            'blocking' => $requested > 0 && ($changes > 0 || $approvals < $required),
+        ];
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -79,7 +107,7 @@ class Rfc extends Model
 
     public function scopeWithRelations($query)
     {
-        return $query->with(['user', 'comments.user', 'tags']);
+        return $query->with(['user', 'comments.user', 'tags', 'decisionRecords.decider', 'reviewRequests.reviewer', 'team']);
     }
 
     public function scopeWithVoteCounts($query)
@@ -154,6 +182,21 @@ class Rfc extends Model
             }),
             'upvotes' => $this->upvotes ?? $this->votes()->Upvotes()->count(),
             'downvotes' => $this->downvotes ?? $this->votes()->Downvotes()->count(),
+            'is_stale' => $this->status === self::STATUS_REVIEW
+                && $this->updated_at !== null
+                && $this->updated_at->lt(now()->subDays(self::STALE_AFTER_DAYS)),
+            'decision' => $this->decisionRecords->first() ? [
+                'status' => $this->decisionRecords->first()->status,
+                'rfc_version' => $this->decisionRecords->first()->rfc_version,
+                'decided_by' => $this->decisionRecords->first()->decider?->name,
+                'decided_at' => $this->decisionRecords->first()->decided_at,
+            ] : null,
+            'reviewers' => $this->reviewRequests->map(fn ($r) => [
+                'id' => $r->user_id,
+                'name' => $r->reviewer?->name,
+                'status' => $r->status,
+            ])->values(),
+            'quorum' => $this->quorumProgress(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

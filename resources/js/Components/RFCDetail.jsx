@@ -8,6 +8,8 @@ import VoteControls from "./VoteControls";
 import StatusBadge from "./StatusBadge";
 import StatusTransitions from "./StatusTransitions";
 
+import ReviewersPanel from "./ReviewersPanel";
+
 const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
   const [comments, setComments] = useState(rfc.comments);
   const canUpdate = rfc.can?.update ?? !!user;
@@ -136,6 +138,29 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
           </div>
         </div>
 
+        {rfc.decision && (
+          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-green-800">
+                Decision: {rfc.decision.status}
+              </h2>
+              <a
+                href={route("rfcs.decision.download", rfc.id)}
+                className="px-3 py-1 text-sm rounded-md bg-green-700 text-white hover:bg-green-800 transition-colors print:hidden"
+              >
+                Download ADR
+              </a>
+            </div>
+            <p className="text-sm text-green-700 mt-1">
+              v{rfc.decision.rfc_version}
+              {rfc.decision.decided_by ? ` · by ${rfc.decision.decided_by}` : ""}
+              {rfc.decision.decided_at
+                ? ` · ${new Date(rfc.decision.decided_at).toLocaleDateString()}`
+                : ""}
+            </p>
+          </div>
+        )}
+
         {sections
           .filter((section) => parsedContent[section.name])
           .map((section) => (
@@ -147,6 +172,8 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
           ))}
 
         {rfc.tags && rfc.tags.length > 0 && <TagList tags={rfc.tags} />}
+
+        <ReviewersPanel rfc={rfc} user={user} />
 
         <VoteControls
           rfcId={rfc.id}

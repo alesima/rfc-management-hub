@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DecisionRecord;
 use App\Models\Rfc;
 use App\Models\RfcTransition;
 use Illuminate\Http\Request;
@@ -20,6 +21,12 @@ class RfcStatusController extends Controller
 
         if (! $rfc->canTransitionTo($to)) {
             return back()->withErrors(['to_status' => "Cannot transition from {$rfc->status} to {$to}."]);
+        }
+
+        if ($to === Rfc::STATUS_APPROVED && $rfc->quorumProgress()['blocking']) {
+            $progress = $rfc->quorumProgress();
+
+            return back()->withErrors(['to_status' => "Blocked: {$progress['approvals']}/{$progress['required']} approvals, {$progress['changes_requested']} change request(s)."]);
         }
 
         if (! $this->isTeamAdmin($request->user(), $rfc) && ! $this->isAuthorSelfTransition($request->user()->id, $rfc, $to)) {
@@ -42,6 +49,19 @@ class RfcStatusController extends Controller
             'actor_id' => $request->user()->id,
             'comment' => $validated['comment'] ?? null,
         ]);
+
+        if ($decided) {
+            DecisionRecord::create([
+                'rfc_id' => $rfc->id,
+                'title' => $rfc->title,
+                'summary' => $rfc->summary,
+                'content' => $rfc->content,
+                'status' => $to,
+                'rfc_version' => $rfc->version,
+                'decided_by' => $request->user()->id,
+                'decided_at' => now(),
+            ]);
+        }
 
         return redirect(route('rfcs.show', $rfc));
     }

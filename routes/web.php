@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewerController;
 use App\Http\Controllers\RfcController;
+use App\Http\Controllers\RfcExportController;
 use App\Http\Controllers\RfcStatusController;
 use App\Http\Controllers\TeamMemberController;
+use App\Http\Controllers\TeamSettingsController;
 use App\Models\Rfc;
 use App\Models\RfcTransition;
 use App\Models\Team;
@@ -42,9 +45,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/rfcs/{rfc}/status', [RfcStatusController::class, 'update'])->name('rfcs.status.update');
     Route::post('/teams/{team}/members', [TeamMemberController::class, 'store'])->name('teams.members.store');
     Route::delete('/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
+    Route::patch('/teams/{team}/settings', [TeamSettingsController::class, 'update'])->name('teams.settings.update');
+    Route::post('/rfcs/{rfc}/reviewers', [ReviewerController::class, 'store'])->name('rfcs.reviewers.store');
+    Route::patch('/rfcs/{rfc}/reviewers/{user}', [ReviewerController::class, 'update'])->name('rfcs.reviewers.update');
+    Route::delete('/rfcs/{rfc}/reviewers/{user}', [ReviewerController::class, 'destroy'])->name('rfcs.reviewers.destroy');
 });
 
 Route::get('/rfcs/{rfc}', [RfcController::class, 'show'])->name('rfcs.show');
+Route::get('/rfcs/{rfc}/decision.md', [RfcExportController::class, 'adr'])->name('rfcs.decision.download');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

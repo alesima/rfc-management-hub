@@ -14,7 +14,7 @@ use Inertia\Inertia;
 
 class RfcController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $query = Rfc::withRelations()->withVoteCounts()->latestFirst();
 
@@ -25,7 +25,29 @@ class RfcController extends Controller
             }
         }
 
-        $rfcs = $this->withPermissions($query->get()->map->transform());
+        $filters = [
+            'q' => $request->input('q'),
+            'status' => in_array($request->input('status'), Rfc::STATUSES, true) ? $request->input('status') : null,
+            'stale' => $request->boolean('stale'),
+        ];
+
+        if ($filters['q']) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('title', 'like', '%'.$filters['q'].'%')
+                    ->orWhere('summary', 'like', '%'.$filters['q'].'%');
+            });
+        }
+
+        if ($filters['status']) {
+            $query->where('status', $filters['status']);
+        }
+
+        if ($filters['stale']) {
+            $query->where('status', Rfc::STATUS_REVIEW)
+                ->where('updated_at', '<', now()->subDays(Rfc::STALE_AFTER_DAYS));
+        }
+
+        $rfcs = $this->withPermissions($query->limit(200)->get()->map->transform());
 
         $tags = Config::get('constants.tags');
         $sections = Config::get('constants.sections');
@@ -36,6 +58,7 @@ class RfcController extends Controller
             'tags' => $tags,
             'sections' => $sections,
             'teams' => Auth::check() ? $this->teamsFor(Auth::user()) : [],
+            'filters' => $filters,
         ]);
     }
 
@@ -53,6 +76,7 @@ class RfcController extends Controller
                 'update' => (bool) ($isAuthor || $isAdmin),
                 'delete' => (bool) ($isAuthor || $isAdmin),
                 'change_status' => (bool) ($isAdmin || ($isAuthor && in_array($rfc['status'], ['draft', 'review'], true))),
+                'respond' => (bool) ($user && collect($rfc['reviewers'] ?? [])->contains(fn ($r) => $r['id'] === $user->id && $r['status'] === 'pending')),
             ];
 
             return $rfc;
@@ -94,7 +118,7 @@ class RfcController extends Controller
 
     public function show(Rfc $rfc)
     {
-        $transformedRfc = $rfc->load(['user', 'comments.user', 'tags'])->loadVoteCounts()->transform();
+        $transformedRfc = $rfc->load(['user', 'comments.user', 'tags', 'decisionRecords.decider', 'reviewRequests.reviewer', 'team'])->loadVoteCounts()->transform();
 
         $tags = Config::get('constants.tags');
         $sections = Config::get('constants.sections');
@@ -108,7 +132,7 @@ class RfcController extends Controller
             }
         }
 
-        $rfcs = $this->withPermissions($listQuery->get()->map->transform());
+        $rfcs = $this->withPermissions($listQuery->limit(200)->get()->map->transform());
         $transformedRfc = $this->withPermissions(collect([$transformedRfc]))->first();
 
         return Inertia::render('Rfcs/Index', [
@@ -118,6 +142,7 @@ class RfcController extends Controller
             'tags' => $tags,
             'sections' => $sections,
             'teams' => Auth::check() ? $this->teamsFor(Auth::user()) : [],
+            'filters' => ['q' => null, 'status' => null, 'stale' => false],
         ]);
     }
 
@@ -182,7 +207,7 @@ class RfcController extends Controller
     private function teamsFor(\App\Models\User $user)
     {
         return $user->teams()
-            ->select('teams.id', 'teams.name', 'teams.slug', 'teams.plan', 'teams.seats_limit')
+            ->select('teams.id', 'teams.name', 'teams.slug', 'teams.plan', 'teams.seats_limit', 'teams.approval_quorum')
             ->with(['members' => fn ($q) => $q->select('users.id', 'users.name', 'users.email')])
             ->get();
     }
