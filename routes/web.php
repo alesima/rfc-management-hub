@@ -5,12 +5,29 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RfcController;
 use App\Http\Controllers\RfcStatusController;
 use App\Http\Controllers\TeamMemberController;
+use App\Models\Rfc;
+use App\Models\RfcTransition;
+use App\Models\Team;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::get('/', [RfcController::class, 'index'])->name('home');
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('rfcs.index');
+    }
 
-// Breeze post-login landing (controllers redirect here by default).
-Route::get('/dashboard', fn () => redirect()->route('home'))->middleware(['auth', 'verified'])->name('dashboard');
+    return Inertia::render('Landing', [
+        'stats' => [
+            'rfcs' => Rfc::count(),
+            'teams' => Team::count(),
+            'decisions' => RfcTransition::whereIn('to_status', ['approved', 'rejected'])->count(),
+        ],
+    ]);
+})->name('home');
+
+// Breeze post-registration landing (controllers redirect here by default).
+Route::get('/dashboard', fn () => redirect()->route('rfcs.index'))->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/rfcs', [RfcController::class, 'index'])->name('rfcs.index');
 
