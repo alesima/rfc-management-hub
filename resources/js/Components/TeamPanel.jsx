@@ -21,7 +21,11 @@ export default function TeamPanel({ team, user }) {
   const canManage = ["owner", "admin"].includes(myRole);
   const seatsUsed = team.members?.length ?? 0;
 
-  const quorumForm = useForm({ approval_quorum: team.approval_quorum ?? 1 });
+  const quorumForm = useForm({
+    approval_quorum: team.approval_quorum ?? 1,
+    slack_webhook_url: team.slack_webhook_url ?? "",
+    teams_webhook_url: team.teams_webhook_url ?? "",
+  });
 
   const saveQuorum = (e) => {
     e.preventDefault();
@@ -153,8 +157,41 @@ export default function TeamPanel({ team, user }) {
               Save
             </button>
           </div>
-          {quorumForm.errors.approval_quorum && (
-            <p className="text-red-500 text-sm mt-2">{quorumForm.errors.approval_quorum}</p>
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <label htmlFor="slack_webhook" className="text-sm text-gray-600 w-36 shrink-0">
+                Slack webhook
+              </label>
+              <input
+                id="slack_webhook"
+                type="url"
+                value={quorumForm.data.slack_webhook_url}
+                onChange={(e) => quorumForm.setData("slack_webhook_url", e.target.value)}
+                placeholder="https://hooks.slack.com/..."
+                className="flex-grow p-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="teams_webhook" className="text-sm text-gray-600 w-36 shrink-0">
+                Teams webhook
+              </label>
+              <input
+                id="teams_webhook"
+                type="url"
+                value={quorumForm.data.teams_webhook_url}
+                onChange={(e) => quorumForm.setData("teams_webhook_url", e.target.value)}
+                placeholder="https://outlook.office.com/..."
+                className="flex-grow p-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              New RFCs and status changes are posted to the configured channels.
+            </p>
+          </div>
+          {(quorumForm.errors.approval_quorum || quorumForm.errors.slack_webhook_url || quorumForm.errors.teams_webhook_url) && (
+            <p className="text-red-500 text-sm mt-2">
+              {quorumForm.errors.approval_quorum ?? quorumForm.errors.slack_webhook_url ?? quorumForm.errors.teams_webhook_url}
+            </p>
           )}
         </form>
       )}

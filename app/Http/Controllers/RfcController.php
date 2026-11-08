@@ -6,6 +6,7 @@ use App\Http\Requests\RfcRequest;
 use App\Models\Rfc;
 use App\Models\Tag;
 use App\Models\Vote;
+use App\Services\TeamNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -16,7 +17,7 @@ class RfcController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Rfc::withRelations()->withVoteCounts()->latestFirst();
+        $query = Rfc::withRelations()->withVoteCounts();
 
         if (Auth::check()) {
             $teamIds = Auth::user()->memberships()->pluck('team_id')->all();
@@ -32,10 +33,7 @@ class RfcController extends Controller
         ];
 
         if ($filters['q']) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('title', 'like', '%'.$filters['q'].'%')
-                    ->orWhere('summary', 'like', '%'.$filters['q'].'%');
-            });
+            $query->search($filters['q']);
         }
 
         if ($filters['status']) {
@@ -43,11 +41,15 @@ class RfcController extends Controller
         }
 
         if ($filters['stale']) {
-            $query->where('status', Rfc::STATUS_REVIEW)
-                ->where('updated_at', '<', now()->subDays(Rfc::STALE_AFTER_DAYS));
+            $query->where('status', Rfc::STATUS_REVIEW)->where(function ($q) {
+                $q->where('updated_at', '<', now()->subDays(Rfc::STALE_AFTER_DAYS))
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('review_due_at')->where('review_due_at', '<', now());
+                    });
+            });
         }
 
-        $rfcs = $this->withPermissions($query->limit(200)->get()->map->transform());
+        $rfcs = $this->withPermissions($query->latestFirst()->limit(200)->get()->map->transform());
 
         $tags = Config::get('constants.tags');
         $sections = Config::get('constants.sections');
@@ -92,7 +94,7 @@ class RfcController extends Controller
     {
         $validated = $request->validated();
 
-        $contentData = collect($validated)->except('title', 'summary', 'tags')->filter()->toArray();
+        $contentData = collect($validated)->except('title', 'summary', 'tags', 'review_due_at')->filter()->toArray();
 
         $content = json_encode($contentData);
 
@@ -103,6 +105,7 @@ class RfcController extends Controller
             'content' => $content,
             'team_id' => $this->resolveTeamFor(request()->user())->id,
             'status' => Rfc::STATUS_DRAFT,
+            'review_due_at' => $validated['review_due_at'] ?? null,
         ]);
 
         if (isset($validated['tags'])) {
@@ -112,6 +115,8 @@ class RfcController extends Controller
 
             $rfc->tags()->attach($tags->pluck('id'));
         }
+
+        TeamNotifier::rfcCreated($rfc->fresh());
 
         return redirect()->route('rfcs.index')->with('success', 'RFC submitted successfully!');
     }
@@ -158,7 +163,7 @@ class RfcController extends Controller
         $this->authorize('update', $rfc);
         $validated = $request->validated();
 
-        $contentData = collect($validated)->except('title', 'summary', 'tags')->filter()->toArray();
+        $contentData = collect($validated)->except('title', 'summary', 'tags', 'review_due_at')->filter()->toArray();
 
         $content = json_encode($contentData);
 
@@ -169,6 +174,7 @@ class RfcController extends Controller
             'summary' => $validated['summary'],
             'content' => $content,
             'slug' => $this->uniqueSlug($validated['title'], $rfc->id),
+            'review_due_at' => $validated['review_due_at'] ?? null,
         ]);
 
         if ($previousStatus !== Rfc::STATUS_DRAFT) {
@@ -207,7 +213,7 @@ class RfcController extends Controller
     private function teamsFor(\App\Models\User $user)
     {
         return $user->teams()
-            ->select('teams.id', 'teams.name', 'teams.slug', 'teams.plan', 'teams.seats_limit', 'teams.approval_quorum')
+            ->select('teams.id', 'teams.name', 'teams.slug', 'teams.plan', 'teams.seats_limit', 'teams.approval_quorum', 'teams.slack_webhook_url', 'teams.teams_webhook_url')
             ->with(['members' => fn ($q) => $q->select('users.id', 'users.name', 'users.email')])
             ->get();
     }

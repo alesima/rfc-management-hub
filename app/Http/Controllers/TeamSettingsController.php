@@ -13,9 +13,11 @@ class TeamSettingsController extends Controller
 
         $validated = $request->validate([
             'approval_quorum' => 'required|integer|min:1|max:10',
+            'slack_webhook_url' => 'nullable|url|max:500',
+            'teams_webhook_url' => 'nullable|url|max:500',
         ]);
 
-        $team->update(['approval_quorum' => $validated['approval_quorum']]);
+        $team->update($validated);
 
         return back()->with('success', 'Review settings updated.');
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DecisionRecord;
 use App\Models\Rfc;
 use App\Models\RfcTransition;
+use App\Services\TeamNotifier;
 use Illuminate\Http\Request;
 
 class RfcStatusController extends Controller
@@ -62,6 +63,8 @@ class RfcStatusController extends Controller
                 'decided_at' => now(),
             ]);
         }
+
+        TeamNotifier::statusChanged($rfc->fresh(), $from, $to, $request->user()->name);
 
         return redirect(route('rfcs.show', $rfc));
     }

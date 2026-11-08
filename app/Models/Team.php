@@ -9,7 +9,7 @@ class Team extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'owner_id', 'plan', 'seats_limit', 'approval_quorum'];
+    protected $fillable = ['name', 'slug', 'owner_id', 'plan', 'seats_limit', 'approval_quorum', 'slack_webhook_url', 'teams_webhook_url'];
 
     public function owner()
     {
