@@ -4,6 +4,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RfcController;
 use App\Http\Controllers\RfcStatusController;
+use App\Http\Controllers\TeamMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [RfcController::class, 'index'])->name('home');
@@ -22,6 +23,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/rfcs/{rfc}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::post('/rfcs/{rfc}/vote', [RfcController::class, 'vote'])->name('rfcs.vote');
     Route::patch('/rfcs/{rfc}/status', [RfcStatusController::class, 'update'])->name('rfcs.status.update');
+    Route::post('/teams/{team}/members', [TeamMemberController::class, 'store'])->name('teams.members.store');
+    Route::delete('/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
 });
 
 Route::get('/rfcs/{rfc}', [RfcController::class, 'show'])->name('rfcs.show');

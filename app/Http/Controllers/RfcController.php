@@ -35,7 +35,7 @@ class RfcController extends Controller
             'user' => Auth::user(),
             'tags' => $tags,
             'sections' => $sections,
-            'teams' => Auth::check() ? Auth::user()->teams()->select('teams.id', 'teams.name', 'teams.slug')->get() : [],
+            'teams' => Auth::check() ? $this->teamsFor(Auth::user()) : [],
         ]);
     }
 
@@ -117,7 +117,7 @@ class RfcController extends Controller
             'user' => Auth::user(),
             'tags' => $tags,
             'sections' => $sections,
-            'teams' => Auth::check() ? Auth::user()->teams()->select('teams.id', 'teams.name', 'teams.slug')->get() : [],
+            'teams' => Auth::check() ? $this->teamsFor(Auth::user()) : [],
         ]);
     }
 
@@ -177,6 +177,14 @@ class RfcController extends Controller
         $rfc->delete();
 
         return redirect(route('rfcs.index'));
+    }
+
+    private function teamsFor(\App\Models\User $user)
+    {
+        return $user->teams()
+            ->select('teams.id', 'teams.name', 'teams.slug', 'teams.plan', 'teams.seats_limit')
+            ->with(['members' => fn ($q) => $q->select('users.id', 'users.name', 'users.email')])
+            ->get();
     }
 
     private function resolveTeamFor(\App\Models\User $user): \App\Models\Team
