@@ -9,15 +9,18 @@ import DetailPrompt from "@/Components/DetailPrompt";
 import ConfirmationModal from "@/Components/ConfirmationModal";
 import SearchBar from "@/Components/SearchBar";
 import TabBar from "@/Components/TabBar";
+import TeamPanel from "@/Components/TeamPanel";
 
 export default function Index({
   user,
   rfcs,
   tags,
   sections,
+  teams = [],
   initialSelectedRFC = null,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState(
     initialSelectedRFC ? "detail" : "list"
   );
@@ -35,11 +38,13 @@ export default function Index({
   }, [initialSelectedRFC]);
 
   useEffect(() => {
-    const filteredRFCs = rfcs.filter((rfc) =>
-      rfc.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredRFCs = rfcs.filter(
+      (rfc) =>
+        rfc.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (statusFilter === "all" || (rfc.status ?? "draft") === statusFilter)
     );
     setRfcList(filteredRFCs);
-  }, [searchTerm, rfcs]);
+  }, [searchTerm, statusFilter, rfcs]);
 
   const handleRFCSelect = (rfc) => {
     setSelectedRFC(rfc);
@@ -92,6 +97,9 @@ export default function Index({
     { key: "detail", icon: "🔍 ", label: "View RFC" },
     { key: "edit", icon: "✏️ ", label: "Edit RFC" },
     { key: "submit", icon: "➕ ", label: "Submit RFC" },
+    ...(user && teams.length > 0
+      ? [{ key: "team", icon: "👥 ", label: "Team" }]
+      : []),
   ].filter((tab) =>
     editingRFC && user ? tab.key !== "submit" : tab.key !== "edit"
   );
@@ -125,19 +133,45 @@ export default function Index({
         } an RFC.`}
       />
     ),
+    team: <TeamPanel team={currentTeam} user={user} />,
   };
+
+  const teamName =
+    teams.find((t) => t.id === selectedRFC?.team_id)?.name ??
+    teams[0]?.name ??
+    null;
+  const currentTeam =
+    teams.find((t) => t.id === selectedRFC?.team_id) ?? teams[0] ?? null;
 
   return (
     <AppLayout
       title={selectedRFC ? `RFC: ${selectedRFC.title}` : "RFC Management Hub"}
       user={user}
+      teamName={teamName}
     >
-      <SearchBar
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        onFocus={handleSearchFocus}
-        placeholder="Search RFCs..."
-      />
+      <div className="flex gap-2">
+        <div className="flex-grow">
+          <SearchBar
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={handleSearchFocus}
+            placeholder="Search RFCs..."
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          title="Filter by status"
+        >
+          <option value="all">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="review">In review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
       <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === "list" && (
         <>

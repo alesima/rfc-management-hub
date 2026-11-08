@@ -3,6 +3,7 @@ import { Link } from "@inertiajs/react";
 import { handleDaysAgo } from "@/Utils/DateUtils";
 import TagList from "./TagList";
 import VoteControls from "./VoteControls";
+import StatusBadge from "./StatusBadge";
 
 export default function RFCList({ user, rfcs, onRFCSelect }) {
   return (
@@ -12,7 +13,10 @@ export default function RFCList({ user, rfcs, onRFCSelect }) {
           key={rfc.id}
           className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow"
         >
-          <h3 className="text-lg font-medium text-gray-800">{rfc.title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-medium text-gray-800">{rfc.title}</h3>
+            <StatusBadge status={rfc.status} />
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             Submitted by {rfc.username} • {handleDaysAgo(rfc.created_at)}
           </p>

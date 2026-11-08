@@ -34,7 +34,8 @@ class RfcController extends Controller
             'rfcs' => $rfcs,
             'user' => Auth::user(),
             'tags' => $tags,
-            'sections' => $sections
+            'sections' => $sections,
+            'teams' => Auth::check() ? $this->teamsFor(Auth::user()) : [],
         ]);
     }
 
@@ -115,7 +116,8 @@ class RfcController extends Controller
             'initialSelectedRFC' => $transformedRfc,
             'user' => Auth::user(),
             'tags' => $tags,
-            'sections' => $sections
+            'sections' => $sections,
+            'teams' => Auth::check() ? $this->teamsFor(Auth::user()) : [],
         ]);
     }
 
@@ -173,7 +175,16 @@ class RfcController extends Controller
     {
         $this->authorize('delete', $rfc);
         $rfc->delete();
+
         return redirect(route('rfcs.index'));
+    }
+
+    private function teamsFor(\App\Models\User $user)
+    {
+        return $user->teams()
+            ->select('teams.id', 'teams.name', 'teams.slug', 'teams.plan', 'teams.seats_limit')
+            ->with(['members' => fn ($q) => $q->select('users.id', 'users.name', 'users.email')])
+            ->get();
     }
 
     private function resolveTeamFor(\App\Models\User $user): \App\Models\Team
@@ -223,6 +234,7 @@ class RfcController extends Controller
 
         if ($existingVote && $existingVote->type === $type) {
             $existingVote->delete();
+
             return response()->json([
                 'message' => 'Vote removed.',
                 'upvotes' => Vote::byRfc($rfc->id)->Upvotes()->count(),

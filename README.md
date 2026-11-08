@@ -43,6 +43,7 @@ RFC carrega contadores via `withVoteCounts()` (evita N+1 do `transform()` antigo
 
 ## Próximos passos
 
-- Team switcher + badges de status no React (passo 4)
-- Limite de seats por plano + convite por email (passo 5)
+- Team switcher multi-team (rotas `/t/{team}`) e convite por token
+- Paginação + busca server-side na lista
+- Integrações: GitHub PR linkado, Slack notify, export ADR Markdown
 - Leitura ainda é pública; pra fechar por time, endurecer `RfcPolicy::view()`

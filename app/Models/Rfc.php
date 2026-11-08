@@ -17,13 +17,19 @@ class Rfc extends Model
         'user_id',
         'team_id',
         'status',
-        'version'
+        'decided_by',
+        'decided_at',
+        'version',
     ];
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_REVIEW = 'review';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
+
     public const STATUS_ARCHIVED = 'archived';
 
     public const STATUSES = [
@@ -99,7 +105,7 @@ class Rfc extends Model
 
     public function scopeContainsTitle($query, $title)
     {
-        return $query->where('title', 'like', '%' . $title . '%');
+        return $query->where('title', 'like', '%'.$title.'%');
     }
 
     public function scopeWithTag($query, $tagName)
