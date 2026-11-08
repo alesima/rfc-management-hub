@@ -92,6 +92,13 @@ export default function Index({
     });
   };
 
+  const teamName =
+    teams.find((t) => t.id === selectedRFC?.team_id)?.name ??
+    teams[0]?.name ??
+    null;
+  const currentTeam =
+    teams.find((t) => t.id === selectedRFC?.team_id) ?? teams[0] ?? null;
+
   const tabs = [
     { key: "list", icon: "📄 ", label: "List RFC" },
     { key: "detail", icon: "🔍 ", label: "View RFC" },
@@ -135,13 +142,6 @@ export default function Index({
     ),
     team: <TeamPanel team={currentTeam} user={user} />,
   };
-
-  const teamName =
-    teams.find((t) => t.id === selectedRFC?.team_id)?.name ??
-    teams[0]?.name ??
-    null;
-  const currentTeam =
-    teams.find((t) => t.id === selectedRFC?.team_id) ?? teams[0] ?? null;
 
   return (
     <AppLayout
