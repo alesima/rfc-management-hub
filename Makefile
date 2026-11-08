@@ -25,7 +25,7 @@ build:
 up:
 	@echo "Starting Docker containers..."
 	docker-compose up -d
-	@echo "Containers started. Backend on http://localhost:8000 and frontend on http://localhost:3000"
+	@echo "Containers started. Backend on http://localhost:8000 and Vite HMR on http://localhost:5173"
 
 # Stop and remove all running containers
 down:
