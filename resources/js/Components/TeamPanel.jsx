@@ -21,6 +21,15 @@ export default function TeamPanel({ team, user }) {
   const canManage = ["owner", "admin"].includes(myRole);
   const seatsUsed = team.members?.length ?? 0;
 
+  const quorumForm = useForm({ approval_quorum: team.approval_quorum ?? 1 });
+
+  const saveQuorum = (e) => {
+    e.preventDefault();
+    quorumForm.patch(route("teams.settings.update", team.id), {
+      preserveScroll: true,
+    });
+  };
+
   const invite = (e) => {
     e.preventDefault();
     post(route("teams.members.store", team.id), {
@@ -114,6 +123,38 @@ export default function TeamPanel({ team, user }) {
         <p className="text-sm text-gray-500">
           Only admins can invite or remove members.
         </p>
+      )}
+
+      {canManage && (
+        <form onSubmit={saveQuorum} className="mt-6 print:hidden">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Review settings
+          </h3>
+          <div className="flex items-center gap-2">
+            <label htmlFor="quorum" className="text-sm text-gray-600">
+              Approvals required to merge a decision
+            </label>
+            <input
+              id="quorum"
+              type="number"
+              min="1"
+              max="10"
+              value={quorumForm.data.approval_quorum}
+              onChange={(e) => quorumForm.setData("approval_quorum", parseInt(e.target.value, 10) || 1)}
+              className="w-20 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <button
+              type="submit"
+              disabled={quorumForm.processing}
+              className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+            >
+              Save
+            </button>
+          </div>
+          {quorumForm.errors.approval_quorum && (
+            <p className="text-red-500 text-sm mt-2">{quorumForm.errors.approval_quorum}</p>
+          )}
+        </form>
       )}
     </div>
   );

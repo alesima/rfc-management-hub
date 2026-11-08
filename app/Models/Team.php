@@ -9,7 +9,7 @@ class Team extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'owner_id', 'plan', 'seats_limit'];
+    protected $fillable = ['name', 'slug', 'owner_id', 'plan', 'seats_limit', 'approval_quorum'];
 
     public function owner()
     {
