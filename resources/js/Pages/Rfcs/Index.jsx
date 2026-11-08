@@ -17,18 +17,20 @@ export default function Index({
   tags,
   sections,
   teams = [],
+  filters = {},
   initialSelectedRFC = null,
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState(filters.q ?? "");
+  const [statusFilter, setStatusFilter] = useState(filters.status ?? "all");
+  const [staleOnly, setStaleOnly] = useState(filters.stale ?? false);
   const [activeTab, setActiveTab] = useState(
     initialSelectedRFC ? "detail" : "list"
   );
   const [selectedRFC, setSelectedRFC] = useState(null);
   const [editingRFC, setEditingRFC] = useState(null);
   const [rfcToDelete, setRFCToDelete] = useState(null);
-  const [rfcList, setRfcList] = useState(rfcs);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const rfcList = rfcs;
 
   useEffect(() => {
     if (initialSelectedRFC) {
@@ -38,13 +40,19 @@ export default function Index({
   }, [initialSelectedRFC]);
 
   useEffect(() => {
-    const filteredRFCs = rfcs.filter(
-      (rfc) =>
-        rfc.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (statusFilter === "all" || (rfc.status ?? "draft") === statusFilter)
-    );
-    setRfcList(filteredRFCs);
-  }, [searchTerm, statusFilter, rfcs]);
+    const t = setTimeout(() => {
+      router.get(
+        route("rfcs.index"),
+        {
+          q: searchTerm || undefined,
+          status: statusFilter === "all" ? undefined : statusFilter,
+          stale: staleOnly || undefined,
+        },
+        { preserveState: true, replace: true, preserveScroll: true }
+      );
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm, statusFilter, staleOnly]);
 
   const handleRFCSelect = (rfc) => {
     setSelectedRFC(rfc);
@@ -78,9 +86,9 @@ export default function Index({
     router.delete(route("rfcs.destroy", rfcToDelete.id), {
       preserveState: true,
       onSuccess: () => {
-        setRfcList(rfcList.filter((rfc) => rfc.id !== rfcToDelete.id));
         setIsModalOpen(false);
         setActiveTab("list");
+        setSelectedRFC(null);
       },
     });
   };
@@ -171,6 +179,18 @@ export default function Index({
           <option value="rejected">Rejected</option>
           <option value="archived">Archived</option>
         </select>
+        <label
+          className="flex items-center gap-1 px-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer"
+          title="Reviews open for more than 14 days"
+        >
+          <input
+            type="checkbox"
+            checked={staleOnly}
+            onChange={(e) => setStaleOnly(e.target.checked)}
+            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          Stale
+        </label>
       </div>
       <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
       {activeTab === "list" && (

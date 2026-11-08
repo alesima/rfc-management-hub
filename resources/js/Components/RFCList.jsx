@@ -16,6 +16,14 @@ export default function RFCList({ user, rfcs, onRFCSelect }) {
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-medium text-gray-800">{rfc.title}</h3>
             <StatusBadge status={rfc.status} />
+            {rfc.is_stale && (
+              <span
+                className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-800"
+                title="In review for more than 14 days"
+              >
+                stale
+              </span>
+            )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
             Submitted by {rfc.username} • {handleDaysAgo(rfc.created_at)}
