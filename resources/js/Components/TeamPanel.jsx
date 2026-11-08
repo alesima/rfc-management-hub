@@ -96,30 +96,16 @@ export default function TeamPanel({ team, user }) {
               placeholder="teammate@company.com"
               className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
-            <div className="relative">
+            <div>
               <select
                 value={data.role}
                 onChange={(e) => setData("role", e.target.value)}
-                className="appearance-none pl-3 pr-8 py-2 border border-gray-300 rounded-md bg-white cursor-pointer"
+                className="form-select rounded-xl border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
                 <option value="owner">Owner</option>
               </select>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
             </div>
             <button
               type="submit"

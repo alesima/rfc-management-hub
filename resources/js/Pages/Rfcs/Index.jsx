@@ -172,11 +172,11 @@ export default function Index({
               placeholder="Search title or summary..."
             />
           </div>
-          <div className="relative">
+          <div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-4 pr-9 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100 cursor-pointer"
+              className="form-select rounded-full border-gray-200 bg-gray-100 text-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer"
               title="Filter by status"
             >
               <option value="all">All statuses</option>
@@ -186,20 +186,6 @@ export default function Index({
               <option value="rejected">Rejected</option>
               <option value="archived">Archived</option>
             </select>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
           </div>
           <button
             type="button"
