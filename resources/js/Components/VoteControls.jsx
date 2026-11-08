@@ -15,7 +15,6 @@ const VoteControls = ({
 
   const handleVote = async (type) => {
     if (!isAuthenticated) {
-      setShowAlert(true);
       return;
     }
 

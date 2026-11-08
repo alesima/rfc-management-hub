@@ -50,6 +50,16 @@ class User extends Authenticatable
         return $this->hasMany(Rfc::class);
     }
 
+    public function memberships()
+    {
+        return $this->hasMany(Membership::class);
+    }
+
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'memberships')->withPivot('role')->withTimestamps();
+    }
+
     public function comments()
     {
         return $this->hasMany(Comment::class);
