@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RfcController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CommentController;
 use App\Http\Controllers\RfcStatusController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', [RfcController::class, 'index'])->name('home');
+
+// Breeze post-login landing (controllers redirect here by default).
+Route::get('/dashboard', fn () => redirect()->route('home'))->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/rfcs', [RfcController::class, 'index'])->name('rfcs.index');
 
@@ -29,4 +32,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
