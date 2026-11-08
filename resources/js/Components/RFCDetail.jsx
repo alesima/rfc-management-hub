@@ -5,9 +5,13 @@ import LoginPrompt from "./LoginPrompt";
 import TagList from "./TagList";
 import RFCSection from "./RFCSection";
 import VoteControls from "./VoteControls";
+import StatusBadge from "./StatusBadge";
+import StatusTransitions from "./StatusTransitions";
 
 const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
   const [comments, setComments] = useState(rfc.comments);
+  const canUpdate = rfc.can?.update ?? !!user;
+  const canDelete = rfc.can?.delete ?? !!user;
 
   const parsedContent = JSON.parse(rfc.content);
 
@@ -31,7 +35,13 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
     <div className="overflow-hidden">
       <div className="md:p-6 p-2">
         <div className="flex flex-col md:flex-row justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900">{rfc.title}</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{rfc.title}</h1>
+            <div className="mt-2">
+              <StatusBadge status={rfc.status} />
+            </div>
+            <StatusTransitions rfc={rfc} />
+          </div>
           <div className="flex space-x-2">
             <button
               onClick={handlePrint}
@@ -55,8 +65,9 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
               <span className="ml-2 hidden md:inline">Print</span>
             </button>
 
-            {user && (
+            {user && (canUpdate || canDelete) && (
               <>
+                {canUpdate && (
                 <button
                   onClick={() => onEdit(rfc)}
                   className="flex items-center justify-center bg-indigo-500 text-white p-2 rounded-md hover:bg-indigo-600 transition-colors print:hidden"
@@ -72,7 +83,9 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
                   </svg>
                   <span className="md:hidden block ml-2">Edit</span>
                 </button>
+                )}
 
+                {canDelete && (
                 <button
                   onClick={() => onDelete(rfc)}
                   className="flex items-center justify-center bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors print:hidden"
@@ -92,6 +105,7 @@ const RFCDetail = ({ sections, rfc, user, onEdit, onDelete }) => {
                   </svg>
                   <span className="md:hidden block ml-2">Delete</span>
                 </button>
+                )}
               </>
             )}
           </div>
