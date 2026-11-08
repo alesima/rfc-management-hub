@@ -5,9 +5,10 @@ services:
             dockerfile: Dockerfile
         image: rfc_management:latest
         container_name: rfc_management
-        ports:
-            - "8000:8000"
-            - "5173:5173"
+        # Host networking: this machine's kernel lacks the iptables NAT
+        # modules Docker needs to publish ports (DNAT fails), so the
+        # container shares the host stack and binds 8000/5173 directly.
+        network_mode: host
         volumes:
             - .:/var/www
             - ./node_modules:/var/www/node_modules

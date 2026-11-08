@@ -54,7 +54,7 @@ make migrate
 make down
 ```
 
-> **iptables / DNAT error on `up`?** Some hosts (restricted VPS, WSL1, Docker-in-Docker) lack the kernel NAT modules and port publishing fails with `Unable to enable DNAT rule`. There is nothing wrong with the image — run natively as above, it needs nothing but PHP + Node.
+> **iptables / DNAT error on `up`?** Some hosts (restricted VPS, WSL1, Docker-in-Docker) lack the kernel NAT modules and port publishing fails with `Unable to enable DNAT rule`. The compose file already works around this with `network_mode: host` (the container binds 8000/5173 directly, no port mapping). If that doesn't suit you, run natively as above — it needs nothing but PHP + Node.
 
 ## Routes
 
